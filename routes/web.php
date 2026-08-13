@@ -1,0 +1,114 @@
+<?php
+
+use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\LandingController;
+use App\Http\Controllers\RegistrationController;
+use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\SettingController;
+use App\Http\Controllers\Admin\CasisController;
+use App\Http\Controllers\Admin\PembayaranController;
+use App\Http\Controllers\Admin\MasterJurusanController;
+use App\Http\Controllers\Admin\ProgramKeunggulanController;
+use App\Http\Controllers\Admin\JadwalController;
+
+/*
+|--------------------------------------------------------------------------
+| Web Routes - SPMB SMK Bhakti Praja Adiwerna
+|--------------------------------------------------------------------------
+*/
+
+// Public Landing Page
+Route::get('/', [LandingController::class, 'index'])->name('landing');
+
+// Student Online Registration
+Route::get('/pendaftaran', [RegistrationController::class, 'index'])->name('pendaftaran');
+Route::post('/pendaftaran', [RegistrationController::class, 'store'])->name('pendaftaran.store');
+
+// Midtrans Webhook Payment Notification
+Route::post('/payment/notification', [PaymentController::class, 'notification'])->name('payment.notification');
+
+// Student Login & Dashboard Routes
+Route::get('/login-siswa', [\App\Http\Controllers\CasisLoginController::class, 'showLoginForm'])->name('casis.login');
+Route::post('/login-siswa', [\App\Http\Controllers\CasisLoginController::class, 'login'])->name('casis.login.post');
+
+Route::middleware([\App\Http\Middleware\EnsureCasisLoggedIn::class])->group(function () {
+    Route::get('/siswa/dashboard', [\App\Http\Controllers\CasisLoginController::class, 'dashboard'])->name('casis.dashboard');
+    Route::post('/siswa/logout', [\App\Http\Controllers\CasisLoginController::class, 'logout'])->name('casis.logout');
+
+    // PDF Cards & Documents
+    Route::get('/siswa/print-kartu', [\App\Http\Controllers\CasisLoginController::class, 'printKartu'])->name('casis.print.kartu');
+    Route::get('/siswa/print-rekap', [\App\Http\Controllers\CasisLoginController::class, 'printRekap'])->name('casis.print.rekap');
+    Route::get('/siswa/print-formulir', [\App\Http\Controllers\CasisLoginController::class, 'printFormulir'])->name('casis.print.formulir');
+    Route::post('/siswa/upload-berkas', [\App\Http\Controllers\CasisLoginController::class, 'uploadBerkas'])->name('casis.upload.berkas');
+
+    // Midtrans Re-enrollment Checkout
+    Route::post('/siswa/bayar', [PaymentController::class, 'createPayment'])->name('casis.pay');
+});
+
+// User Profile Routes
+Route::middleware('auth')->group(function () {
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+});
+
+// Admin & Officer Routes
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::middleware(['role:admin,petugas'])->group(function () {
+        Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+        Route::post('/admin/notifications/read-all', function () {
+            Auth::user()->unreadNotifications->markAsRead();
+            return back()->with('success', 'Semua notifikasi telah ditandai dibaca.');
+        })->name('admin.notifications.readAll');
+        Route::post('/admin/verify/{id}', [DashboardController::class, 'verify'])->name('admin.verify');
+
+        Route::middleware(['role:admin'])->group(function () {
+            Route::post('/admin/verify-bulk', [DashboardController::class, 'bulkVerify'])->name('admin.verify-bulk');
+            Route::post('/admin/unverify/{id}', [DashboardController::class, 'unverify'])->name('admin.unverify');
+        });
+
+        Route::get('/admin/casis', [CasisController::class, 'index'])->name('admin.casis.index');
+        Route::get('/admin/casis/export', [CasisController::class, 'export'])->name('admin.casis.export');
+        Route::get('/admin/casis/search/api', [CasisController::class, 'apiSearch'])->name('admin.casis.api_search');
+
+        Route::get('/admin/pembayaran', [PembayaranController::class, 'index'])->name('admin.pembayaran.index');
+        Route::get('/admin/pembayaran/export', [PembayaranController::class, 'export'])->name('admin.pembayaran.export');
+        Route::get('/admin/pembayaran/{id}', [PembayaranController::class, 'show'])->name('admin.pembayaran.show');
+        Route::post('/admin/pembayaran/{id}/reminder', [PembayaranController::class, 'reminder'])->name('admin.pembayaran.reminder');
+
+        // FIXED ROUTE ORDER: Specific routes before wildcard parameter {casis}
+        Route::middleware(['role:admin'])->group(function () {
+            Route::get('/admin/casis/create', [CasisController::class, 'create'])->name('admin.casis.create');
+            Route::post('/admin/casis', [CasisController::class, 'store'])->name('admin.casis.store');
+        });
+
+        Route::get('/admin/casis/{casis}', [CasisController::class, 'show'])->name('admin.casis.show');
+        Route::post('/admin/casis/{id}/reminder', [CasisController::class, 'sendReminder'])->name('admin.casis.reminder');
+
+        Route::middleware(['role:admin'])->group(function () {
+            Route::get('/admin/casis/{casis}/edit', [CasisController::class, 'edit'])->name('admin.casis.edit');
+            Route::put('/admin/casis/{casis}', [CasisController::class, 'update'])->name('admin.casis.update');
+            Route::delete('/admin/casis/{casis}', [CasisController::class, 'destroy'])->name('admin.casis.destroy');
+            Route::resource('admin/users', \App\Http\Controllers\Admin\UserController::class)->names('admin.users');
+            Route::get('/admin/settings', [SettingController::class , 'index'])->name('admin.settings');
+            Route::post('/admin/settings', [SettingController::class , 'update'])->name('admin.settings.update');
+            Route::post('/admin/settings/test-fonnte', [SettingController::class , 'testFonnte'])->name('admin.settings.test-fonnte');
+
+            Route::get('/admin/nilai', [\App\Http\Controllers\Admin\NilaiController::class , 'index'])->name('admin.nilai.index');
+            Route::get('/admin/nilai/download', [\App\Http\Controllers\Admin\NilaiController::class , 'download'])->name('admin.nilai.download');
+            
+            // Selection & Re-enrollment Status Updates
+            Route::post('/admin/casis/{id}/selection', [CasisController::class, 'updateSelection'])->name('admin.casis.selection');
+            Route::post('/admin/casis/{id}/daftar-ulang', [CasisController::class, 'updateDaftarUlang'])->name('admin.casis.daftar-ulang');
+
+            // Master Data CRUD Routes
+            Route::resource('admin/jurusans', MasterJurusanController::class)->names('admin.jurusans');
+            Route::resource('admin/program-keunggulan', ProgramKeunggulanController::class)->names('admin.program-keunggulan');
+            Route::resource('admin/jadwals', JadwalController::class)->names('admin.jadwals');
+            Route::post('admin/tahun-ajarans', [JadwalController::class, 'storeTahunAjaran'])->name('admin.tahun-ajarans.store');
+        });
+    });
+});
+require __DIR__ . '/auth.php';
