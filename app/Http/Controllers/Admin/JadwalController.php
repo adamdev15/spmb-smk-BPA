@@ -12,7 +12,7 @@ class JadwalController extends Controller
     public function index()
     {
         $tahunAjarans = TahunAjaran::orderByDesc('nama')->get();
-        $periods = SpmbPeriod::with('tahunAjaran')->withCount('casis')->orderByDesc('tanggal_mulai')->get();
+        $periods = SpmbPeriod::with('tahunAjaran')->withCount('casis')->orderByDesc('tanggal_mulai')->paginate(10);
         
         $activePeriod = SpmbPeriod::with('tahunAjaran')
             ->where('tanggal_mulai', '<=', now())

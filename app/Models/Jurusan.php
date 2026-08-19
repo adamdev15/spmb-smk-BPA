@@ -32,4 +32,9 @@ class Jurusan extends Model
     {
         return max(0, $this->kuota - $this->jumlah_daftar_ulang);
     }
+
+    public function biayas()
+    {
+        return $this->belongsToMany(Biaya::class, 'biaya_jurusan', 'jurusan_id', 'biaya_id');
+    }
 }

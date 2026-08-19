@@ -18,7 +18,29 @@
                 </p>
             </div>
 
-            <form action="{{ isset($casis) ? route('admin.casis.update', $casis->id) : route('admin.casis.store') }}" method="POST" id="casisForm">
+            @if ($errors->any())
+            <div class="mb-8 bg-red-50 border-l-4 border-red-500 p-4 rounded-r-xl">
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                    <div class="ml-3">
+                        <h3 class="text-sm font-medium text-red-800">Terdapat kesalahan pengisian form:</h3>
+                        <div class="mt-2 text-sm text-red-700">
+                            <ul class="list-disc pl-5 space-y-1">
+                                @foreach ($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            @endif
+
+            <form action="{{ isset($casis) ? route('admin.casis.update', $casis->id) : route('admin.casis.store') }}" method="POST" id="casisForm" enctype="multipart/form-data">
                 @csrf
                 @if(isset($casis))
                     @method('PUT')
@@ -121,6 +143,19 @@
                             <input type="date" name="tgl_lahir" value="{{ old('tgl_lahir', $casis->tgl_lahir ?? '') }}" class="w-full rounded-2xl border-slate-300 py-3 text-sm focus:border-blue-600 focus:ring-blue-100 bg-slate-50">
                         </div>
 
+                        <div>
+                            <label class="block font-bold text-slate-700 uppercase tracking-wider mb-2">Agama <span class="text-red-500">*</span></label>
+                            <select name="agama" class="w-full rounded-2xl border-slate-300 py-3 text-sm focus:border-blue-600 focus:ring-blue-100 bg-slate-50" required>
+                                <option value="">Pilih Agama</option>
+                                <option value="Islam" {{ old('agama', $casis->agama ?? '') == 'Islam' ? 'selected' : '' }}>Islam</option>
+                                <option value="Kristen" {{ old('agama', $casis->agama ?? '') == 'Kristen' ? 'selected' : '' }}>Kristen</option>
+                                <option value="Katolik" {{ old('agama', $casis->agama ?? '') == 'Katolik' ? 'selected' : '' }}>Katolik</option>
+                                <option value="Hindu" {{ old('agama', $casis->agama ?? '') == 'Hindu' ? 'selected' : '' }}>Hindu</option>
+                                <option value="Buddha" {{ old('agama', $casis->agama ?? '') == 'Buddha' ? 'selected' : '' }}>Buddha</option>
+                                <option value="Konghucu" {{ old('agama', $casis->agama ?? '') == 'Konghucu' ? 'selected' : '' }}>Konghucu</option>
+                            </select>
+                        </div>
+
                         <div class="md:col-span-2">
                             <label class="block font-bold text-slate-700 uppercase tracking-wider mb-2">Alamat Lengkap Siswa</label>
                             <input type="text" name="alamat_siswa" value="{{ old('alamat_siswa', $casis->alamat_siswa ?? '') }}" class="w-full rounded-2xl border-slate-300 py-3 text-sm focus:border-blue-600 focus:ring-blue-100 bg-slate-50" placeholder="Jalan, RT/RW, Desa, Kecamatan, Kabupaten">
@@ -154,6 +189,37 @@
                         <div>
                             <label class="block font-bold text-slate-700 uppercase tracking-wider mb-2">Alamat Sekolah Asal</label>
                             <input type="text" name="alamat_sekolah" value="{{ old('alamat_sekolah', $casis->alamat_sekolah ?? '') }}" class="w-full rounded-2xl border-slate-300 py-3 text-sm focus:border-blue-600 focus:ring-blue-100 bg-slate-50">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 4: Upload Dokumen -->
+                <div class="bg-white rounded-3xl shadow-sm border border-slate-200/80 p-8 mb-8">
+                    <h3 class="text-lg font-bold text-slate-900 font-heading mb-6 flex items-center gap-3">
+                        <div class="w-8 h-8 bg-blue-100 rounded-xl flex items-center justify-center text-blue-600 font-bold">4</div>
+                        Upload Dokumen Pendaftaran
+                    </h3>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs">
+                        <div>
+                            <label class="block font-bold text-slate-700 uppercase tracking-wider mb-2">Pas Foto 3x4</label>
+                            <input type="file" name="pas_foto" accept="image/jpeg,image/png,image/jpg" class="w-full rounded-2xl border-slate-300 py-2.5 px-3 text-sm focus:border-blue-600 focus:ring-blue-100 bg-slate-50">
+                            <p class="text-slate-400 mt-1" style="font-size: 11px;">Format: JPG, JPEG, PNG (Maks 2MB)</p>
+                        </div>
+                        <div>
+                            <label class="block font-bold text-slate-700 uppercase tracking-wider mb-2">Scan/Foto Kartu Keluarga (KK)</label>
+                            <input type="file" name="fc_kk" accept="image/jpeg,image/png,image/jpg,application/pdf" class="w-full rounded-2xl border-slate-300 py-2.5 px-3 text-sm focus:border-blue-600 focus:ring-blue-100 bg-slate-50">
+                            <p class="text-slate-400 mt-1" style="font-size: 11px;">Format: JPG, PNG, PDF (Maks 2MB)</p>
+                        </div>
+                        <div>
+                            <label class="block font-bold text-slate-700 uppercase tracking-wider mb-2">Scan/Foto Akta Kelahiran</label>
+                            <input type="file" name="fc_akta" accept="image/jpeg,image/png,image/jpg,application/pdf" class="w-full rounded-2xl border-slate-300 py-2.5 px-3 text-sm focus:border-blue-600 focus:ring-blue-100 bg-slate-50">
+                            <p class="text-slate-400 mt-1" style="font-size: 11px;">Format: JPG, PNG, PDF (Maks 2MB)</p>
+                        </div>
+                        <div>
+                            <label class="block font-bold text-slate-700 uppercase tracking-wider mb-2">Scan/Foto Ijazah / SKL</label>
+                            <input type="file" name="fc_ijazah" accept="image/jpeg,image/png,image/jpg,application/pdf" class="w-full rounded-2xl border-slate-300 py-2.5 px-3 text-sm focus:border-blue-600 focus:ring-blue-100 bg-slate-50">
+                            <p class="text-slate-400 mt-1" style="font-size: 11px;">Format: JPG, PNG, PDF (Maks 2MB)</p>
                         </div>
                     </div>
                 </div>

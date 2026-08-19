@@ -140,12 +140,34 @@
         </tr>
     </table>
 
-    <div style="margin-left: 65%; margin-top: 50px;">
-        Tegal, {{ \Carbon\Carbon::now()->translatedFormat('d F Y') }}<br>
-        Calon Peserta SPMB
-        <br><br><br><br>
-        <strong>{{ strtoupper($casis?->nama_lengkap ?? '-') }}</strong>
-    </div>
+    <table style="width: 100%; margin-top: 50px; text-align: center;">
+        <tr>
+            <td style="width: 50%; vertical-align: bottom;">
+                Mengetahui,<br>
+                Panitia SPMB SMK BPA
+                <br><br>
+                <div style="position: relative; height: 80px; width: 100%; margin: 0 auto;">
+                    @if(isset($settings['kwitansi_stempel_panitia']) && $settings['kwitansi_stempel_panitia'] && file_exists(public_path('storage/' . $settings['kwitansi_stempel_panitia'])))
+                        <img src="{{ public_path('storage/' . $settings['kwitansi_stempel_panitia']) }}" style="height: 120px; position: absolute; left: 10%; top: -20px; z-index: 1; opacity: 0.8;">
+                    @endif
+
+                    @if(isset($settings['kwitansi_ttd_panitia']) && $settings['kwitansi_ttd_panitia'] && file_exists(public_path('storage/' . $settings['kwitansi_ttd_panitia'])))
+                        <img src="{{ public_path('storage/' . $settings['kwitansi_ttd_panitia']) }}" style="height: 80px; position: relative; z-index: 2; margin: 0 auto; display: block; object-fit: contain;">
+                    @else
+                        <div style="height: 80px;"></div>
+                    @endif
+                </div>
+                <strong><u>{{ $settings['kwitansi_nama_panitia'] ?? 'Panitia Pendaftaran' }}</u></strong>
+            </td>
+            <td style="width: 50%; vertical-align: bottom;">
+                Tegal, {{ \Carbon\Carbon::now()->translatedFormat('d F Y') }}<br>
+                Calon Peserta SPMB
+                <br><br>
+                <div style="height: 80px;"></div>
+                <strong><u>{{ strtoupper($casis?->nama_lengkap ?? '-') }}</u></strong>
+            </td>
+        </tr>
+    </table>
 </body>
 
 </html>

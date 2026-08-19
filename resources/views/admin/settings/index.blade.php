@@ -89,6 +89,16 @@
                                         Mendukung HTML tags
                                     </p>
 
+                                @elseif($setting->type == 'boolean' || $setting->key == 'fonnte_status')
+                                    <div class="mt-1" x-data="{ checked: {{ $setting->value == '1' || $setting->value == 'true' ? 'true' : 'false' }} }">
+                                        <label class="relative inline-flex items-center cursor-pointer">
+                                            <input type="hidden" name="{{ $setting->key }}" value="0">
+                                            <input type="checkbox" name="{{ $setting->key }}" value="1" x-model="checked" class="sr-only peer">
+                                            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                                            <span class="ml-3 text-sm font-medium text-gray-900" x-text="checked ? 'Aktif' : 'Tidak Aktif'"></span>
+                                        </label>
+                                    </div>
+
                                 {{-- DATE --}}
                                 @elseif($setting->type == 'date')
                                     <input type="date" 
@@ -164,7 +174,7 @@
                     </div>
                     <div class="p-6">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            @for($i = 1; $i <= 4; $i++)
+                            @for($i = 1; $i <= 2; $i++)
                             <div class="border border-gray-200 rounded-lg p-4">
                                 <h4 class="text-sm font-semibold text-gray-700 mb-4">Kontak {{ $i }}</h4>
                                 <div class="space-y-4">
@@ -204,7 +214,7 @@
                         <p class="text-sm text-gray-500 mt-1">Pengaturan alur pendaftaran yang ditampilkan di halaman landing</p>
                     </div>
                     <div class="p-6">
-                        <div class="space-y-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             @foreach($groupedSettings['Alur Pendaftaran'] as $setting)
                                 @if(in_array($setting->key, ['alur_spmb_gambar', 'alur_spmb_konten']))
                                 <div>
@@ -213,14 +223,16 @@
                                         <textarea name="{{ $setting->key }}" rows="6" 
                                             class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">{{ $setting->value }}</textarea>
                                     @elseif($setting->type == 'file')
-                                        @if($setting->value)
-                                            <div class="mb-2">
-                                                <img src="{{ asset('storage/' . $setting->value) }}" alt="Preview" class="h-32 object-contain rounded-md border border-gray-200">
-                                            </div>
-                                        @endif
+                                        <div class="mb-2" id="preview-container-{{ $setting->key }}" style="{{ $setting->value ? '' : 'display: none;' }}">
+                                            <img id="preview-img-{{ $setting->key }}" src="{{ $setting->value ? asset('storage/' . $setting->value) : '#' }}" alt="Preview" class="h-32 object-contain rounded-md border border-gray-200 bg-white shadow-sm">
+                                        </div>
                                         <input type="file" 
                                             name="{{ $setting->key }}" 
-                                            class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                            id="file-{{ $setting->key }}"
+                                            class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                                            accept="image/*"
+                                            onchange="previewImage(this, '{{ $setting->key }}')"
+                                        >
                                     @else
                                         <input type="text" 
                                             name="{{ $setting->key }}" 
@@ -291,9 +303,9 @@
                                 Mulai Test Koneksi
                             </button>
                         </div>
-                        <div class="grid grid-cols-1 gap-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             @foreach($groupedSettings['WhatsApp'] as $setting)
-                            <div>
+                            <div class="{{ in_array($setting->key, ['fonnte_token', 'fonnte_status']) ? 'md:col-span-2' : '' }}">
                                 <label class="block text-sm font-medium text-gray-700 mb-2">
                                     {{ $setting->name }}
                                 </label>
@@ -307,8 +319,21 @@
                                         Variabel: [NAMA]
                                     @elseif($setting->key == 'wa_pesan_kelulusan')
                                         Variabel: [NAMA], [STATUS]
+                                    @elseif($setting->key == 'wa_pesan_tagihan_daftar_ulang')
+                                        Variabel: [NAMA], [NOMOR_DAFTAR], [JURUSAN], [PROGRAM_KEUNGGULAN], [NOMINAL], [JATUH_TEMPO], [LINK_DASHBOARD]
+                                    @elseif($setting->key == 'wa_pesan_pembayaran_sukses')
+                                        Variabel: [NAMA], [NOMOR_PEMBAYARAN], [NOMINAL], [METODE], [TANGGAL_BAYAR]
                                     @endif
                                 </p>
+                                @elseif($setting->type == 'boolean' || $setting->key == 'fonnte_status')
+                                <div class="mt-1" x-data="{ checked: {{ $setting->value == '1' || $setting->value == 'true' ? 'true' : 'false' }} }">
+                                    <label class="relative inline-flex items-center cursor-pointer">
+                                        <input type="hidden" name="{{ $setting->key }}" value="0">
+                                        <input type="checkbox" name="{{ $setting->key }}" value="1" x-model="checked" class="sr-only peer">
+                                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                                        <span class="ml-3 text-sm font-medium text-gray-900" x-text="checked ? 'Aktif' : 'Tidak Aktif'"></span>
+                                    </label>
+                                </div>
                                 @else
                                 <input type="text" name="{{ $setting->key }}" value="{{ $setting->value }}"
                                     class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
@@ -335,24 +360,148 @@
                         </div>
                     </div>
                     <div class="p-6">
-                        <div class="grid grid-cols-1 gap-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             @foreach($groupedSettings['Midtrans'] as $setting)
+<div>
+    <label class="block text-sm font-medium text-gray-700 mb-2">
+        {{ $setting->name }}
+    </label>
+
+    {{-- MIDTRANS PRODUCTION TOGGLE --}}
+    @if(
+        $setting->key == 'midtrans_production'
+        || str_contains(strtolower($setting->name), 'production')
+    )
+        <div class="mt-1"
+             x-data="{
+                checked: {{ $setting->value == '1' || $setting->value == 'true' ? 'true' : 'false' }}
+             }">
+
+            <label class="relative inline-flex items-center cursor-pointer">
+                <input
+                    type="hidden"
+                    name="{{ $setting->key }}"
+                    value="0"
+                >
+
+                <input
+                    type="checkbox"
+                    name="{{ $setting->key }}"
+                    value="1"
+                    x-model="checked"
+                    class="sr-only peer"
+                >
+
+                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+
+                <span
+                    class="ml-3 text-sm font-medium text-gray-900"
+                    x-text="checked ? 'Production' : 'Sandbox'"
+                ></span>
+            </label>
+
+        </div>
+
+    {{-- BOOLEAN BIASA --}}
+    @elseif($setting->type == 'boolean')
+
+        <div class="mt-1"
+             x-data="{
+                checked: {{ $setting->value == '1' || $setting->value == 'true' ? 'true' : 'false' }}
+             }">
+
+            <label class="relative inline-flex items-center cursor-pointer">
+                <input
+                    type="hidden"
+                    name="{{ $setting->key }}"
+                    value="0"
+                >
+
+                <input
+                    type="checkbox"
+                    name="{{ $setting->key }}"
+                    value="1"
+                    x-model="checked"
+                    class="sr-only peer"
+                >
+
+                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+
+                <span
+                    class="ml-3 text-sm font-medium text-gray-900"
+                    x-text="checked ? 'Aktif' : 'Tidak Aktif'"
+                ></span>
+            </label>
+
+        </div>
+
+    {{-- LONGTEXT --}}
+    @elseif($setting->type == 'longtext')
+
+        <textarea
+            name="{{ $setting->key }}"
+            rows="5"
+            class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+        >{{ $setting->value }}</textarea>
+
+    {{-- INPUT BIASA --}}
+    @else
+
+        <input
+            type="text"
+            name="{{ $setting->key }}"
+            value="{{ $setting->value }}"
+            class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+        >
+
+    @endif
+</div>
+@endforeach
+                        </div>
+                    </div>
+                </div>
+                @endif
+
+                <!-- Tanda Tangan & Surat Settings -->
+                @if(isset($groupedSettings['Tanda Tangan & Surat']) && $groupedSettings['Tanda Tangan & Surat']->count() > 0)
+                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6">
+                    <div class="p-6 border-b border-gray-200 bg-gray-50 flex items-center gap-3">
+                        <div class="p-2 bg-blue-100 rounded-lg">
+                            <svg class="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-900">Tanda Tangan & Surat</h3>
+                            <p class="text-xs text-gray-500 mt-0.5">Pengaturan Tanda Tangan untuk Cetakan Bukti dan Kop Surat</p>
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            @foreach($groupedSettings['Tanda Tangan & Surat'] as $setting)
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-2">
                                     {{ $setting->name }}
                                 </label>
 
-                                @if($setting->type == 'longtext')
-                                <textarea name="{{ $setting->key }}" rows="5"
-                                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">{{ $setting->value }}</textarea>
-                                @elseif($setting->type == 'boolean')
-                                <select name="{{ $setting->key }}" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                                    <option value="1" {{ $setting->value == '1' || $setting->value == 'true' ? 'selected' : '' }}>Ya</option>
-                                    <option value="0" {{ $setting->value == '0' || $setting->value == 'false' ? 'selected' : '' }}>Tidak</option>
-                                </select>
-                                @else
-                                <input type="text" name="{{ $setting->key }}" value="{{ $setting->value }}"
-                                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                @if($setting->type == 'file')
+                                    <div class="mb-2" id="preview-container-{{ $setting->key }}" style="{{ $setting->value ? '' : 'display: none;' }}">
+                                        <img id="preview-img-{{ $setting->key }}" src="{{ $setting->value ? asset('storage/' . $setting->value) : '#' }}" alt="{{ $setting->name }}" class="h-20 object-contain rounded border border-gray-200 bg-white shadow-sm">
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <input
+                                            type="file"
+                                            name="{{ $setting->key }}"
+                                            id="file-{{ $setting->key }}"
+                                            class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                                            accept="image/*"
+                                            onchange="previewImage(this, '{{ $setting->key }}')"
+                                        >
+                                        @if(in_array($setting->key, ['pengumuman_ttd_kepsek', 'pengumuman_ttd_ketua', 'kwitansi_ttd_panitia']))
+                                        <button type="button" onclick="openSignatureCanvas('{{ $setting->key }}', '{{ $setting->name }}')" class="shrink-0 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-md text-xs font-bold transition flex items-center gap-1 border border-slate-300">
+                                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                                            Buat TTD
+                                        </button>
+                                        @endif
+                                    </div>
                                 @endif
                             </div>
                             @endforeach
@@ -379,11 +528,15 @@
                                 <textarea name="{{ $setting->key }}" rows="5"
                                     class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">{{ $setting->value }}</textarea>
                                 <p class="text-xs text-gray-500 mt-1">Mendukung HTML tags</p>
-                                @elseif($setting->type == 'boolean')
-                                <select name="{{ $setting->key }}" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                                    <option value="1" {{ $setting->value == '1' || $setting->value == 'true' ? 'selected' : '' }}>Ya</option>
-                                    <option value="0" {{ $setting->value == '0' || $setting->value == 'false' ? 'selected' : '' }}>Tidak</option>
-                                </select>
+                                @elseif($setting->type == 'boolean' || $setting->key == 'fonnte_status')
+                                <div class="mt-1" x-data="{ checked: {{ $setting->value == '1' || $setting->value == 'true' ? 'true' : 'false' }} }">
+                                    <label class="relative inline-flex items-center cursor-pointer">
+                                        <input type="hidden" name="{{ $setting->key }}" value="0">
+                                        <input type="checkbox" name="{{ $setting->key }}" value="1" x-model="checked" class="sr-only peer">
+                                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                                        <span class="ml-3 text-sm font-medium text-gray-900" x-text="checked ? 'Aktif' : 'Tidak Aktif'"></span>
+                                    </label>
+                                </div>
                                 @elseif($setting->type == 'date')
                                 <input type="date" name="{{ $setting->key }}" value="{{ $setting->value }}"
                                     class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
@@ -446,4 +599,121 @@
             </div>
         </div>
     </div>
+    <!-- Signature Canvas Modal -->
+    <div id="modalSignature" class="fixed inset-0 z-50 hidden bg-slate-900/50 backdrop-blur-sm flex justify-center items-center p-4">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden flex flex-col">
+            <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                <h3 class="text-lg font-bold text-slate-800" id="signatureModalTitle">Buat Tanda Tangan</h3>
+                <button type="button" onclick="closeSignatureCanvas()" class="text-slate-400 hover:text-slate-600">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+            <div class="p-6 bg-slate-100 flex-grow flex justify-center items-center">
+                <canvas id="signatureCanvas" class="bg-white rounded-xl shadow-inner border border-slate-300 cursor-crosshair" width="400" height="200"></canvas>
+            </div>
+            <div class="px-6 py-4 border-t border-slate-100 bg-white flex justify-between items-center">
+                <button type="button" onclick="clearSignature()" class="text-sm font-semibold text-red-500 hover:text-red-700">Bersihkan Canvas</button>
+                <div class="flex gap-3">
+                    <button type="button" onclick="closeSignatureCanvas()" class="px-4 py-2 text-sm font-semibold text-slate-600 hover:text-slate-900">Batal</button>
+                    <button type="button" onclick="saveSignature()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold transition">Gunakan TTD</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
+    <script>
+        let signaturePad = null;
+        let currentSignatureTarget = null;
+
+        function openSignatureCanvas(targetKey, title) {
+            currentSignatureTarget = targetKey;
+            document.getElementById('signatureModalTitle').innerText = 'TTD: ' + title;
+            document.getElementById('modalSignature').classList.remove('hidden');
+            
+            if (!signaturePad) {
+                const canvas = document.getElementById('signatureCanvas');
+                signaturePad = new SignaturePad(canvas, {
+                    backgroundColor: 'rgba(255, 255, 255, 0)',
+                    penColor: 'rgb(0, 0, 0)'
+                });
+            } else {
+                signaturePad.clear();
+            }
+        }
+
+        function closeSignatureCanvas() {
+            document.getElementById('modalSignature').classList.add('hidden');
+            currentSignatureTarget = null;
+        }
+
+        function clearSignature() {
+            if (signaturePad) signaturePad.clear();
+        }
+
+        function previewImage(input, targetKey) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = document.getElementById('preview-img-' + targetKey);
+                    const container = document.getElementById('preview-container-' + targetKey);
+                    if (img && container) {
+                        img.src = e.target.result;
+                        container.style.display = 'block';
+                    }
+                }
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        function saveSignature() {
+            if (signaturePad.isEmpty()) {
+                alert("Harap buat tanda tangan terlebih dahulu.");
+                return;
+            }
+
+            const dataURL = signaturePad.toDataURL('image/png');
+            
+            // Show Live Preview immediately
+            const img = document.getElementById('preview-img-' + currentSignatureTarget);
+            const container = document.getElementById('preview-container-' + currentSignatureTarget);
+            if (img && container) {
+                img.src = dataURL;
+                container.style.display = 'block';
+            }
+            
+            // Convert DataURL to File object
+            fetch(dataURL)
+                .then(res => res.blob())
+                .then(blob => {
+                    const file = new File([blob], currentSignatureTarget + '_signature.png', { type: 'image/png' });
+                    
+                    // Attach file to the targeted input[type="file"] using DataTransfer
+                    const dataTransfer = new DataTransfer();
+                    dataTransfer.items.add(file);
+                    
+                    const fileInput = document.getElementById('file-' + currentSignatureTarget);
+                    if (fileInput) {
+                        fileInput.files = dataTransfer.files;
+                        // Show success alert
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'TTD Diterapkan',
+                            text: 'Tanda tangan berhasil dibuat. Jangan lupa klik Simpan Pengaturan untuk menyimpannya.',
+                            timer: 2500,
+                            showConfirmButton: false
+                        });
+                    }
+                    
+                    closeSignatureCanvas();
+                });
+        }
+    </script>
 </x-app-layout>
+
+
+
+
+
+
+

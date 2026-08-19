@@ -5,33 +5,35 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Casis;
-use App\Models\Pembayaran;
-use App\Models\TahunAjaran;
-use App\Models\SpmbPeriod;
 use App\Models\Jurusan;
+use App\Models\Pembayaran;
+use App\Models\SpmbPeriod;
+use App\Models\TahunAjaran;
 use App\Services\WhatsAppService;
+use App\Services\PembayaranService;
 
 class PembayaranController extends Controller
 {
     public function index(Request $request)
     {
-        // Get filter data
-        $jurusans = Jurusan::orderBy('nama', 'asc')->get();
+        $jurusans = Jurusan::where('status_aktif', true)->get();
         $tahunAjarans = TahunAjaran::with('spmbPeriods')->orderBy('nama', 'desc')->get();
         $activePeriod = SpmbPeriod::where('status', 'aktif')->first();
 
-        // Defaults
         $selectedTahunAjaranId = $request->input('tahun_ajaran_id');
         $selectedSpmbPeriodId = $request->input('spmb_period_id');
 
-        if (!$selectedTahunAjaranId && !$selectedSpmbPeriodId && $activePeriod) {
+        if (!$selectedTahunAjaranId && (!$selectedSpmbPeriodId && $activePeriod)) {
             $selectedTahunAjaranId = $activePeriod->tahun_ajaran_id;
             $selectedSpmbPeriodId = $activePeriod->id;
         }
 
-        $query = Casis::with(['pembayaranTerakhir', 'jurusan', 'programKeunggulan', 'spmbPeriod'])
-            ->where('status_verifikasi', 'Diverifikasi')
-            ->has('pembayaran');
+        $query = Casis::with(['pembayaranTerakhir', 'pembayaranDaftarUlang', 'jurusan', 'programKeunggulan', 'spmbPeriod'])
+            ->where(function($q) {
+                $q->where('status_verifikasi', 'Diverifikasi')
+                  ->orWhere('status_kelulusan', 'Lulus')
+                  ->orWhereHas('pembayaran');
+            });
 
         // Apply Search
         if ($request->filled('search')) {
@@ -40,7 +42,7 @@ class PembayaranController extends Controller
                 $q->where('nama_lengkap', 'like', "%{$search}%")
                   ->orWhere('nisn', 'like', "%{$search}%")
                   ->orWhere('no_pendaftaran', 'like', "%{$search}%")
-                  ->orWhereHas('pembayaranTerakhir', function ($q2) use ($search) {
+                  ->orWhereHas('pembayaran', function ($q2) use ($search) {
                       $q2->where('order_id', 'like', "%{$search}%");
                   });
             });
@@ -85,10 +87,70 @@ class PembayaranController extends Controller
 
     public function show($id)
     {
-        $casis = Casis::with(['pembayaranTerakhir', 'jurusan', 'programKeunggulan', 'spmbPeriod.tahunAjaran'])
-            ->findOrFail($id);
+        $casis = Casis::with(['jurusan', 'programKeunggulan', 'spmbPeriod.tahunAjaran', 'pembayaran' => function($q) {
+            $q->with('admin')->orderBy('created_at', 'desc');
+        }])->findOrFail($id);
+
+        $pembayaran = PembayaranService::createOrGetTagihanDaftarUlang($casis, false);
             
-        return view('admin.pembayaran.show', compact('casis'));
+        return view('admin.pembayaran.show', compact('casis', 'pembayaran'));
+    }
+
+    public function printKwitansi($id)
+    {
+        $casis = Casis::with(['jurusan', 'spmbPeriod.tahunAjaran'])->findOrFail($id);
+        $settings = \App\Models\Setting::all()->pluck('value', 'key');
+        
+        $tagihanDaftarUlang = \App\Services\PembayaranService::createOrGetTagihanDaftarUlang($casis, false);
+        $tahun_ajaran = $casis->spmbPeriod ? $casis->spmbPeriod->tahunAjaran->nama : '2026/2027';
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('casis.pdf.kwitansi', compact('casis', 'tagihanDaftarUlang', 'settings', 'tahun_ajaran'));
+        return $pdf->stream('Kwitansi_Pembayaran_' . $casis->no_pendaftaran . '.pdf');
+    }
+
+    public function processPayment(Request $request, $id)
+    {
+        $casis = Casis::findOrFail($id);
+
+        $request->validate([
+            'payment_mode' => 'required|in:offline,online',
+            'nominal' => 'required|numeric|min:0',
+            'payment_type' => 'nullable|string',
+            'paid_at' => 'nullable|date',
+            'nomor_referensi' => 'nullable|string',
+            'catatan_admin' => 'nullable|string',
+            'transaction_status' => 'nullable|in:settlement,pending,failed'
+        ]);
+
+        if ($request->payment_mode === 'offline') {
+            PembayaranService::processManualPayment($casis, [
+                'nominal' => $request->nominal,
+                'payment_type' => $request->payment_type ?: 'Tunai',
+                'paid_at' => $request->paid_at ?: now(),
+                'nomor_referensi' => $request->nomor_referensi,
+                'catatan_admin' => $request->catatan_admin ?: 'Pembayaran Manual Kasir Sekolah (Offline)',
+                'transaction_status' => $request->transaction_status ?: 'settlement'
+            ], auth()->user());
+
+            return back()->with('success', 'Pembayaran manual sebesar Rp ' . number_format($request->nominal, 0, ',', '.') . ' berhasil disimpan dan status daftar ulang telah diperbarui.');
+        } else {
+            // Online mode: generate/refresh snap token or send WA payment link
+            $result = PembayaranService::getOrCreateSnapToken($casis);
+            
+            if ($request->has('send_wa') && $casis->no_hp_siswa) {
+                $p = $result['pembayaran'] ?? PembayaranService::createOrGetTagihanDaftarUlang($casis, false);
+                WhatsAppService::sendTagihanDaftarUlang($casis, $p);
+                return back()->with('success', 'Rincian pembayaran online berhasil dikirim ke WhatsApp ' . $casis->nama_lengkap);
+            }
+
+            if ($result['success']) {
+                return back()
+                    ->with('success', 'Transaksi online Payment Gateway berhasil disiapkan.')
+                    ->with('open_snap_token', $result['snap_token']);
+            } else {
+                return back()->with('error', $result['message'] ?? 'Gagal membuat transaksi online.');
+            }
+        }
     }
 
     public function reminder($id)
@@ -103,20 +165,24 @@ class PembayaranController extends Controller
             return back()->with('error', 'Siswa tidak memiliki nomor WhatsApp.');
         }
 
-        $success = WhatsAppService::sendDaftarUlangReminder($casis);
+        $pembayaran = PembayaranService::createOrGetTagihanDaftarUlang($casis, false);
+        $success = WhatsAppService::sendTagihanDaftarUlang($casis, $pembayaran);
 
         if ($success) {
-            return back()->with('success', 'Notifikasi pengingat WhatsApp berhasil dikirim ke ' . $casis->nama_lengkap);
+            return back()->with('success', 'Notifikasi rincian tagihan daftar ulang WhatsApp berhasil dikirim ke ' . $casis->nama_lengkap);
         } else {
-            return back()->with('error', 'Gagal mengirim notifikasi WhatsApp. Pastikan nomor valid atau API aktif.');
+            return back()->with('error', 'Gagal mengirim notifikasi WhatsApp. Pastikan nomor valid atau API Fonnte aktif.');
         }
     }
 
     public function export(Request $request)
     {
         $query = Casis::with(['pembayaranTerakhir', 'jurusan', 'programKeunggulan'])
-            ->where('status_verifikasi', 'Diverifikasi')
-            ->has('pembayaran');
+            ->where(function($q) {
+                $q->where('status_verifikasi', 'Diverifikasi')
+                  ->orWhere('status_kelulusan', 'Lulus')
+                  ->orWhereHas('pembayaran');
+            });
 
         // Apply all filters exactly like index
         $activePeriod = SpmbPeriod::where('status', 'aktif')->first();
@@ -134,7 +200,7 @@ class PembayaranController extends Controller
                 $q->where('nama_lengkap', 'like', "%{$search}%")
                   ->orWhere('nisn', 'like', "%{$search}%")
                   ->orWhere('no_pendaftaran', 'like', "%{$search}%")
-                  ->orWhereHas('pembayaranTerakhir', function ($q2) use ($search) {
+                  ->orWhereHas('pembayaran', function ($q2) use ($search) {
                       $q2->where('order_id', 'like', "%{$search}%");
                   });
             });

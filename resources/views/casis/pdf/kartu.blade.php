@@ -35,7 +35,7 @@
         .photo-box {
             position: absolute;
             right: 10px;
-            top: 50px;
+            top: 10px;
             width: 100px;
             height: 130px;
             border: 1px solid #333;
@@ -50,12 +50,13 @@
         }
         .badge {
             display: inline-block;
-            padding: 3px 8px;
-            background: #f3f3f3ff;
-            color: #797979ff;
-            font-size: 11px;
-            font-weight: bold;
+            padding: 4px 10px;
+            background: #e5e5e5;
+            color: #000;
+            font-size: 14px;
             border-radius: 4px;
+            font-weight: 900;
+            border: 1px solid #ccc;
         }
         .footer-sig {
             margin-top: 25px;
@@ -77,7 +78,9 @@
             <td align="center">
                 <h2 style="margin:0; font-size: 18px;">SEKOLAH MENENGAH KEJURUAN BHAKTI PRAJA ADIWERNA</h2>
                 <p style="margin:0; font-size: 11px; font-weight: bold;">PANITIA SISTEM PENERIMAAN MURID BARU (SPMB) TA {{ $tahun_ajaran }}</p>
-                <p style="margin:2px 0; font-size: 12px;">Jl. Singkil No. 24, Adiwerna, Kab. Tegal | Telp: (0283) 443210</p>
+                <p style="margin:2px 0; font-size: 12px;">Alamat: Jl. KH. Wahid Hasyim No. 125 Adiwerna, Tegal 52165 | (0283)-4541933
+            <br>
+            Website: https://smkbpadw.sch.id | E-mail: smkbpadw@gmail.com | Tegal 52194</p>
             </td>
         </tr>
     </table>
@@ -95,16 +98,6 @@
                 <td>NAMA LENGKAP</td>
                 <td>:</td>
                 <td><strong>{{ strtoupper($casis->nama_lengkap) }}</strong></td>
-            </tr>
-            <tr>
-                <td>NISN / NIK</td>
-                <td>:</td>
-                <td>{{ $casis->nisn }} / {{ $casis->nik ?? '-' }}</td>
-            </tr>
-            <tr>
-                <td>JENIS KELAMIN</td>
-                <td>:</td>
-                <td>{{ $casis->jk == 'L' ? 'LAKI-LAKI' : 'PEREMPUAN' }}</td>
             </tr>
             <tr>
                 <td>TEMPAT, TGL LAHIR</td>
@@ -155,33 +148,39 @@
         </div>
     </div>
 
-    <p style="text-align: left; font-style: italic; font-weight: bold;">Pendaftaran Gratis</p>
-    <p style="text-align: left;">Contact Person:</p>
-    <ul>
-        @if(!empty($settings['contact_person']))
-            @foreach(explode("\n", str_replace("\r", "", $settings['contact_person'])) as $cp)
-                @if(trim($cp) != '')
-                    <li>{{ trim($cp) }}</li> <br>
-                @endif
-            @endforeach
-        @endif
-    </ul>
+    <table style="width: 100%; margin-top: 15px;">
+        <tr>
+            <td style="width: 60%; vertical-align: top;">
+                <p style="text-align: left; font-style: italic; font-weight: bold; margin-bottom: 5px; margin-top: 0;">Pendaftaran Gratis</p>
+                <p style="text-align: left; margin: 0;">Contact Person:</p>
+                <ul style="margin-top: 5px; padding-left: 20px;">
+                    @if(!empty($settings['contact_person']))
+                        @foreach(explode("\n", str_replace("\r", "", $settings['contact_person'])) as $cp)
+                            @if(trim($cp) != '')
+                                <li>{{ trim($cp) }}</li>
+                            @endif
+                        @endforeach
+                    @endif
+                </ul>
+            </td>
+            <td style="width: 40%; vertical-align: top; text-align: center; font-size: 13px;">
+                Adiwerna, {{ \Carbon\Carbon::now()->translatedFormat('d F Y') }}<br>
+                Panitia SPMB SMK BPA,<br><br>
+                <div style="position: relative; height: 80px; width: 100%; margin: 0 auto;">
+                    @if(isset($settings['kwitansi_stempel_panitia']) && $settings['kwitansi_stempel_panitia'] && file_exists(public_path('storage/' . $settings['kwitansi_stempel_panitia'])))
+                        <img src="{{ public_path('storage/' . $settings['kwitansi_stempel_panitia']) }}" style="height: 160px; position: absolute; left: 10%; top: -35px; z-index: 3; opacity: 0.85;">
+                    @endif
 
-    <div style="margin-top: 15px; background: #f3f3f3ff; border: 1px solid #e6e6e6ff; padding: 10px; border-radius: 5px;">
-        <strong style="color: #515151ff;">INFORMASI TAHAPAN SELEKSI:</strong>
-        <ol style="margin: 5px 0 0 15px; padding: 0; font-size: 12px;">
-            <li>Calon siswa wajib mengikuti Tes Psikotes dan Seleksi Fisik (pemeriksaan tindik, tato, dan buta warna).</li>
-            <li>Hasil pengumuman dan link join Grup WhatsApp Jurusan dapat diakses melalui Dashboard Siswa.</li>
-            <li>Simpan kartu bukti ini dan tunjukkan kepada panitia saat verifikasi berkas fisik & seleksi.</li>
-            <li>Daftar ulang dapat dilakukan setelah dinyatakan lulus seleksi dengan membayaran biaya daftar ulang.</li>
-        </ol>
-    </div>
-
-    <div class="footer-sig">
-        Adiwerna, {{ \Carbon\Carbon::now()->translatedFormat('d F Y') }}<br>
-        Panitia SPMB SMK BPA,<br><br><br><br>
-        <strong>( Panitia Pendaftaran )</strong>
-    </div>
+                    @if(isset($settings['kwitansi_ttd_panitia']) && $settings['kwitansi_ttd_panitia'] && file_exists(public_path('storage/' . $settings['kwitansi_ttd_panitia'])))
+                        <img src="{{ public_path('storage/' . $settings['kwitansi_ttd_panitia']) }}" style="height: 80px; position: relative; z-index: 2; margin: 0 auto; display: block; object-fit: contain;">
+                    @else
+                        <div style="height: 80px;"></div>
+                    @endif
+                </div>
+                <strong><u>{{ $settings['kwitansi_nama_panitia'] ?? 'Panitia Pendaftaran' }}</u></strong>
+            </td>
+        </tr>
+    </table>
 
 </body>
 </html>

@@ -12,6 +12,7 @@ use App\Http\Controllers\Admin\PembayaranController;
 use App\Http\Controllers\Admin\MasterJurusanController;
 use App\Http\Controllers\Admin\ProgramKeunggulanController;
 use App\Http\Controllers\Admin\JadwalController;
+use Illuminate\Support\Facades\Auth;
 
 /*
 |--------------------------------------------------------------------------
@@ -21,6 +22,7 @@ use App\Http\Controllers\Admin\JadwalController;
 
 // Public Landing Page
 Route::get('/', [LandingController::class, 'index'])->name('landing');
+Route::get('/preview-hasil-pengumuman', [LandingController::class, 'previewHasilPengumuman'])->name('preview.hasil.pengumuman');
 
 // Student Online Registration
 Route::get('/pendaftaran', [RegistrationController::class, 'index'])->name('pendaftaran');
@@ -41,6 +43,8 @@ Route::middleware([\App\Http\Middleware\EnsureCasisLoggedIn::class])->group(func
     Route::get('/siswa/print-kartu', [\App\Http\Controllers\CasisLoginController::class, 'printKartu'])->name('casis.print.kartu');
     Route::get('/siswa/print-rekap', [\App\Http\Controllers\CasisLoginController::class, 'printRekap'])->name('casis.print.rekap');
     Route::get('/siswa/print-formulir', [\App\Http\Controllers\CasisLoginController::class, 'printFormulir'])->name('casis.print.formulir');
+    Route::get('/siswa/print-kwitansi', [\App\Http\Controllers\CasisLoginController::class, 'printKwitansi'])->name('casis.print.kwitansi');
+    Route::get('/siswa/print-pengumuman', [\App\Http\Controllers\CasisLoginController::class, 'printPengumuman'])->name('casis.print.pengumuman');
     Route::post('/siswa/upload-berkas', [\App\Http\Controllers\CasisLoginController::class, 'uploadBerkas'])->name('casis.upload.berkas');
 
     // Midtrans Re-enrollment Checkout
@@ -76,7 +80,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/admin/pembayaran', [PembayaranController::class, 'index'])->name('admin.pembayaran.index');
         Route::get('/admin/pembayaran/export', [PembayaranController::class, 'export'])->name('admin.pembayaran.export');
         Route::get('/admin/pembayaran/{id}', [PembayaranController::class, 'show'])->name('admin.pembayaran.show');
+        Route::get('/admin/pembayaran/{id}/print-kwitansi', [PembayaranController::class, 'printKwitansi'])->name('admin.pembayaran.print_kwitansi');
         Route::post('/admin/pembayaran/{id}/reminder', [PembayaranController::class, 'reminder'])->name('admin.pembayaran.reminder');
+        Route::post('/admin/pembayaran/{id}/process', [PembayaranController::class, 'processPayment'])->name('admin.pembayaran.process');
 
         // FIXED ROUTE ORDER: Specific routes before wildcard parameter {casis}
         Route::middleware(['role:admin'])->group(function () {
@@ -103,11 +109,20 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::post('/admin/casis/{id}/selection', [CasisController::class, 'updateSelection'])->name('admin.casis.selection');
             Route::post('/admin/casis/{id}/daftar-ulang', [CasisController::class, 'updateDaftarUlang'])->name('admin.casis.daftar-ulang');
 
+            // Admin PDF Print Routes
+            Route::get('/admin/casis/{id}/print-kartu', [CasisController::class, 'printKartu'])->name('admin.casis.print.kartu');
+            Route::get('/admin/casis/{id}/print-formulir', [CasisController::class, 'printFormulir'])->name('admin.casis.print.formulir');
+            Route::get('/admin/casis/{id}/print-pengumuman', [CasisController::class, 'printPengumuman'])->name('admin.casis.print.pengumuman');
+
             // Master Data CRUD Routes
             Route::resource('admin/jurusans', MasterJurusanController::class)->names('admin.jurusans');
             Route::resource('admin/program-keunggulan', ProgramKeunggulanController::class)->names('admin.program-keunggulan');
             Route::resource('admin/jadwals', JadwalController::class)->names('admin.jadwals');
             Route::post('admin/tahun-ajarans', [JadwalController::class, 'storeTahunAjaran'])->name('admin.tahun-ajarans.store');
+            
+            // Admin Biaya
+            Route::post('admin/biaya/jenis', [\App\Http\Controllers\Admin\BiayaController::class, 'storeJenis'])->name('admin.biaya.store_jenis');
+            Route::resource('admin/biaya', \App\Http\Controllers\Admin\BiayaController::class)->names('admin.biaya')->except(['create', 'show', 'edit']);
         });
     });
 });

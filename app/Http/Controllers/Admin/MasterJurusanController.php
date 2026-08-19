@@ -10,7 +10,7 @@ class MasterJurusanController extends Controller
 {
     public function index()
     {
-        $jurusans = Jurusan::withCount('casis')->get();
+        $jurusans = Jurusan::withCount('casis')->paginate(10);
         return view('admin.jurusan.index', compact('jurusans'));
     }
 

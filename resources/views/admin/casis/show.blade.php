@@ -273,16 +273,62 @@
                         <div class="p-8 border-b border-gray-50 bg-gray-50/50">
                             <h3 class="text-lg font-bold text-gray-900 flex items-center gap-3">
                                 <div
-                                    class="w-8 h-8 bg-purple-100 rounded-xl flex items-center justify-center text-purple-600">
+                                    class="w-8 h-8 bg-blue-100 rounded-xl flex items-center justify-center text-blue-600">
                                     <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                             d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
                                     </svg>
                                 </div>
-                                Hasil Seleksi Post Test
+                                Hasil Pendaftaran Siswa
                             </h3>
                         </div>
                         <div class="p-8">
+                            <div class="mb-8 space-y-3">
+                                <!-- Kartu Pendaftaran Siswa -->
+                                <a href="{{ route('admin.casis.print.kartu', $casis->id) }}" target="_blank" class="w-full flex items-center justify-between bg-white border border-gray-200 hover:border-blue-500 hover:shadow-md text-gray-700 hover:text-blue-600 px-5 py-4 rounded-2xl transition-all group">
+                                    <div class="flex items-center gap-3">
+                                        <div class="p-2 bg-gray-50 group-hover:bg-blue-50 rounded-xl transition-colors">
+                                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2" /></svg>
+                                        </div>
+                                        <div class="text-left">
+                                            <p class="text-sm font-bold">Kartu Pendaftaran</p>
+                                            <p class="text-[10px] text-gray-400">Download bukti registrasi</p>
+                                        </div>
+                                    </div>
+                                    <svg class="w-5 h-5 text-gray-400 group-hover:text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                                </a>
+
+                                <!-- Formulir Pendaftaran -->
+                                <a href="{{ route('admin.casis.print.formulir', $casis->id) }}" target="_blank" class="w-full flex items-center justify-between bg-white border border-gray-200 hover:border-blue-500 hover:shadow-md text-gray-700 hover:text-blue-600 px-5 py-4 rounded-2xl transition-all group">
+                                    <div class="flex items-center gap-3">
+                                        <div class="p-2 bg-gray-50 group-hover:bg-blue-50 rounded-xl transition-colors">
+                                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                                        </div>
+                                        <div class="text-left">
+                                            <p class="text-sm font-bold">Formulir Siswa</p>
+                                            <p class="text-[10px] text-gray-400">Download formulir lengkap</p>
+                                        </div>
+                                    </div>
+                                    <svg class="w-5 h-5 text-gray-400 group-hover:text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                                </a>
+
+                                <!-- Hasil Kelulusan Siswa, dengan Download Surat Pengumuman -->
+                                @if($casis->status_kelulusan === 'Lulus' || $casis->status_kelulusan === 'Tidak Lulus' || $casis->status_kelulusan === 'Cadangan')
+                                <a href="{{ route('admin.casis.print.pengumuman', $casis->id) }}" target="_blank" class="w-full flex items-center justify-between bg-white border border-gray-200 hover:border-blue-500 hover:shadow-md text-gray-700 hover:text-blue-600 px-5 py-4 rounded-2xl transition-all group">
+                                    <div class="flex items-center gap-3">
+                                        <div class="p-2 bg-gray-50 group-hover:bg-blue-50 rounded-xl transition-colors">
+                                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 19v-8.93a2 2 0 01.89-1.664l7-4.666a2 2 0 012.22 0l7 4.666A2 2 0 0121 10.07V19M3 19a2 2 0 002 2h14a2 2 0 002-2M3 19l6.75-4.5M21 19l-6.75-4.5M3 10l6.75 4.5M21 10l-6.75 4.5m0 0l-1.14.76a2 2 0 01-2.22 0l-1.14-.76" /></svg>
+                                        </div>
+                                        <div class="text-left">
+                                            <p class="text-sm font-bold">Surat Pengumuman</p>
+                                            <p class="text-[10px] text-gray-400">Download hasil kelulusan</p>
+                                        </div>
+                                    </div>
+                                    <svg class="w-5 h-5 text-gray-400 group-hover:text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                                </a>
+                                @endif
+                            </div>
+
                             <form action="{{ route('admin.casis.selection', $casis->id) }}" method="POST"
                                 class="space-y-6">
                                 @csrf
@@ -291,7 +337,7 @@
                                         class="block text-[10px] font-black text-gray-400 capitalize tracking-widest mb-2 px-1">Status
                                         Kelulusan</label>
                                     <select name="status_kelulusan"
-                                        class="bg-gray-50 border border-gray-100 text-gray-900 text-sm font-bold rounded-2xl focus:ring-purple-500 focus:border-purple-500 block w-full p-4 transition-all">
+                                        class="bg-gray-50 border border-gray-100 text-gray-900 text-sm font-bold rounded-2xl focus:ring-blue-500 focus:border-blue-500 block w-full p-4 transition-all">
                                         <option value="Proses" {{ $casis->status_kelulusan == 'Proses' ? 'selected' : ''
                                             }}>PROSES</option>
                                         <option value="Lulus" {{ $casis->status_kelulusan == 'Lulus' ? 'selected' : ''
@@ -304,7 +350,7 @@
                                 </div>
 
                                 <button type="submit"
-                                    class="w-full bg-gray-900 hover:bg-black text-white text-[10px] font-black capitalize tracking-widest py-4 rounded-2xl shadow-xl transition-all active:scale-95">
+                                    class="w-full bg-blue-500 hover:bg-blue-700 text-white text-[10px] font-black capitalize tracking-widest py-4 rounded-2xl shadow-xl transition-all active:scale-95">
                                     Simpan Hasil Kelulusan
                                 </button>
                             </form>
@@ -312,11 +358,59 @@
                     </div>
                     @endif
 
+                    <!-- Pembayaran Card -->
+                    <div class="bg-white rounded-[2rem] shadow-sm border border-gray-100 overflow-hidden">
+                        <div class="p-4 border-b border-gray-50 bg-gray-50/50">
+                            <h3 class="text-lg font-bold text-gray-900 flex items-center gap-3">
+                                <div class="w-8 h-8 bg-green-100 rounded-xl flex items-center justify-center text-green-600">
+                                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                </div>
+                                Informasi Daftar Ulang
+                            </h3>
+                        </div>
+                        <div class="p-4">
+                            @if($pembayaran)
+                            <div class="flex justify-between items-center">
+                                <div class="mb-2">
+                                    <p class="text-[10px] text-gray-400 font-bold tracking-widest uppercase mb-1">Status</p>
+                                    <span class="inline-flex px-3 py-1 text-xs font-bold rounded-lg 
+                                        {{ $pembayaran->transaction_status === 'settlement' || $casis->status_daftar_ulang === 'Sudah' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700' }}">
+                                        {{ $pembayaran->transaction_status === 'settlement' || $casis->status_daftar_ulang === 'Sudah' ? 'LUNAS' : strtoupper($pembayaran->transaction_status) }}
+                                    </span>
+                                </div>
+                                <div class="mb-2">
+                                    <p class="text-[10px] text-gray-400 font-bold tracking-widest uppercase mb-1">Nominal</p>
+                                    <p class="text-sm font-bold text-gray-900">Rp {{ number_format($pembayaran->nominal, 0, ',', '.') }}</p>
+                                </div>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <div class="mb-2">
+                                    <p class="text-[10px] text-gray-400 font-bold tracking-widest uppercase mb-1">Metode</p>
+                                    <p class="text-xs font-bold text-gray-900">{{ $pembayaran->tipe_pembayaran === 'offline' ? 'Offline (Kasir)' : 'Online (' . ($pembayaran->payment_type ?? 'Midtrans') . ')' }}</p>
+                                </div>
+                                <div class="mb-2">
+                                    <p class="text-[10px] text-gray-400 font-bold tracking-widest uppercase mb-1">Tanggal bayar</p>
+                                    <p class="text-xs font-bold text-gray-900">{{ $pembayaran->created_at->format('d F Y') }}</p>
+                                </div>
+                            </div>
+                            @else
+                                <div class="text-center py-4">
+                                    <p class="text-xs text-gray-500 mb-4">Belum ada tagihan daftar ulang.</p>
+                                    <a href="{{ route('admin.pembayaran.show', $casis->id) }}" class="inline-flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-black capitalize tracking-widest px-6 py-3 rounded-xl transition-all shadow-md shadow-blue-500/20">
+                                        Kelola Pembayaran
+                                    </a>
+                                </div>
+                            @endif
+                        </div>
+                    </div>
+
                     <!-- Additional Stats -->
                     <div class="bg-gray-900 rounded-[2.5rem] p-8 text-white relative overflow-hidden shadow-2xl">
                         <div class="absolute bottom-0 left-0 -mb-10 -ml-10 w-40 h-40 bg-white/10 rounded-full blur-3xl">
                         </div>
-                        <p class="text-[10px] font-black capitalize tracking-[0.2em] text-white/40 mb-6">Informasi
+                        <p class="text-[10px] font-black capitalize tracking-[0.2em] text-white/90 mb-6">Informasi
                             Tambahan</p>
                         <ul class="space-y-6 relative">
                             <li class="flex items-center gap-4">

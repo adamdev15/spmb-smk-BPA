@@ -41,4 +41,19 @@ class LandingController extends Controller
             'registrationStatus', 'tanggalMulai', 'tanggalSelesai', 'activePeriod'
         ));
     }
+
+    public function previewHasilPengumuman()
+    {
+        $settings = Setting::all()->pluck('value', 'key');
+        
+        $activePeriod = SpmbPeriod::with('tahunAjaran')
+            ->where('status', 'aktif')
+            ->first();
+            
+        $tahun_ajaran = $activePeriod ? $activePeriod->tahunAjaran->nama : '2026/2027';
+        $tahun_masuk = explode('/', $tahun_ajaran)[0] ?? '2026';
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('casis.pdf.hasil-pengumuman', compact('settings', 'tahun_ajaran', 'tahun_masuk'));
+        return $pdf->stream('Hasil_Pengumuman.pdf');
+    }
 }

@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\Casis;
 use App\Models\Jurusan;
 use App\Models\Pembayaran;
+use App\Services\PembayaranService;
 use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
@@ -117,7 +118,11 @@ class DashboardController extends Controller
     {
         $casis = Casis::findOrFail($id);
         $casis->update(['status_verifikasi' => 'Diverifikasi']);
-        return back()->with('success', 'Data siswa berhasil diverifikasi.');
+
+        // Automatically create/ensure re-enrollment billing and trigger WA
+        PembayaranService::createOrGetTagihanDaftarUlang($casis, true);
+
+        return back()->with('success', 'Data siswa berhasil diverifikasi & tagihan daftar ulang otomatis diterbitkan.');
     }
 
     public function unverify(Request $request, $id)
@@ -134,8 +139,14 @@ class DashboardController extends Controller
             'casis_ids.*' => 'exists:casis,id'
         ]);
 
-        Casis::whereIn('id', $request->casis_ids)->update(['status_verifikasi' => 'Diverifikasi']);
+        $casisList = Casis::whereIn('id', $request->casis_ids)->get();
 
-        return back()->with('success', count($request->casis_ids) . ' data siswa berhasil diverifikasi.');
+        foreach ($casisList as $casis) {
+            $casis->update(['status_verifikasi' => 'Diverifikasi']);
+            // Automatically create/ensure re-enrollment billing and trigger WA
+            PembayaranService::createOrGetTagihanDaftarUlang($casis, true);
+        }
+
+        return back()->with('success', count($request->casis_ids) . ' data siswa berhasil diverifikasi & tagihan daftar ulang diterbitkan.');
     }
 }

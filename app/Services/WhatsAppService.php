@@ -5,6 +5,9 @@ namespace App\Services;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use App\Models\Setting;
+use App\Models\Casis;
+use App\Models\Pembayaran;
+use Carbon\Carbon;
 
 class WhatsAppService
 {
@@ -17,6 +20,12 @@ class WhatsAppService
      */
     public static function sendMessage(string $target, string $message): bool
     {
+        $status = Setting::where('key', 'fonnte_status')->value('value');
+        if ($status === '0' || $status === 'false') {
+            Log::info('WhatsAppService: Fonnte is disabled via settings. Message not sent to ' . $target);
+            return false;
+        }
+
         $token = Setting::where('key', 'fonnte_token')->value('value') ?: config('services.fonnte.token');
 
         if (empty($token)) {
@@ -39,11 +48,17 @@ class WhatsAppService
             ]);
 
             if ($response->successful()) {
-                Log::info('WhatsApp message sent successfully to ' . $target);
-                return true;
+                $responseData = $response->json();
+                if (isset($responseData['status']) && $responseData['status'] === true) {
+                    Log::info('WhatsApp message sent successfully to ' . $target);
+                    return true;
+                } else {
+                    Log::error('WhatsAppService error: ' . $response->body());
+                    return false;
+                }
             }
 
-            Log::error('WhatsAppService error: ' . $response->body());
+            Log::error('WhatsAppService HTTP error: ' . $response->status() . ' - ' . $response->body());
             return false;
         } catch (\Exception $e) {
             Log::error('WhatsAppService Exception: ' . $e->getMessage());
@@ -107,12 +122,92 @@ class WhatsAppService
     }
 
     /**
-     * Send Payment Success Notification to Applicant
+     * Send Automatic Re-Enrollment Invoice/Billing Notification to Applicant
+     */
+    public static function sendTagihanDaftarUlang(Casis $casis, Pembayaran $pembayaran): bool
+    {
+        $template = Setting::where('key', 'wa_pesan_tagihan_daftar_ulang')->value('value')
+            ?: "Selamat [NAMA]!\n\nPendaftaran Anda dengan No. Pendaftaran: [NOMOR_DAFTAR] telah Dinyatakan DITERIMA / LULUS VERIFIKASI di SMK Bhakti Praja Adiwerna.\n\nRincian Tagihan Daftar Ulang:\n- Jenis: Daftar Ulang Siswa Baru\n- Jurusan: [JURUSAN]\n- Program: [PROGRAM_KEUNGGULAN]\n- Nominal: Rp [NOMINAL]\n- Jatuh Tempo: [JATUH_TEMPO]\n\nSilakan login ke dashboard siswa untuk melakukan pembayaran online (QRIS/VA/E-Wallet) atau datang langsung ke loket pendaftaran sekolah:\n[LINK_DASHBOARD]\n\nTerima kasih.";
+
+        $jurusanNama = $casis->jurusan ? $casis->jurusan->nama : '-';
+        $programNama = $casis->programKeunggulan ? $casis->programKeunggulan->nama : '-';
+        $nominal = number_format($pembayaran->nominal, 0, ',', '.');
+        $jatuhTempo = $pembayaran->tgl_jatuh_tempo
+            ? Carbon::parse($pembayaran->tgl_jatuh_tempo)->translatedFormat('d F Y')
+            : 'Sesuai Jadwal';
+        $linkDashboard = url('/login-siswa');
+
+        $message = str_replace(
+            ['[NAMA]', '[NOMOR_DAFTAR]', '[JURUSAN]', '[PROGRAM_KEUNGGULAN]', '[NOMINAL]', '[JATUH_TEMPO]', '[LINK_DASHBOARD]'],
+            [$casis->nama_lengkap, $casis->no_pendaftaran, $jurusanNama, $programNama, $nominal, $jatuhTempo, $linkDashboard],
+            $template
+        );
+
+        return self::sendMessage($casis->no_hp_siswa, $message);
+    }
+
+    /**
+     * Send Payment Success (Lunas) Notification to Applicant
      */
     public static function sendPaymentSuccess($casis, $pembayaran): bool
     {
-        $message = "Halo {$casis->nama_lengkap},\n\nTerima kasih, Pembayaran Daftar Ulang Anda sebesar Rp " . number_format($pembayaran->nominal, 0, ',', '.') . " telah berhasil diproses (LUNAS).\n\nStatus pendaftaran Anda saat ini adalah: SUDAH DAFTAR ULANG.\n\nSimpan pesan ini sebagai bukti pembayaran yang sah.\nSalam,\nPanitia SPMB SMK Bhakti Praja Adiwerna.";
+        $template = Setting::where('key', 'wa_pesan_pembayaran_sukses')->value('value')
+            ?: "Halo [NAMA],\n\nPembayaran Daftar Ulang Anda telah BERHASIL kami terima (LUNAS).\n\nRincian Pembayaran:\n- No. Pembayaran: [NOMOR_PEMBAYARAN]\n- Nominal: Rp [NOMINAL]\n- Metode: [METODE]\n- Status: LUNAS\n- Tanggal: [TANGGAL_BAYAR]\n\nStatus Pendaftaran Anda saat ini: SUDAH DAFTAR ULANG.\nSilakan simpan pesan ini sebagai bukti pembayaran yang sah.\n\nTerima kasih,\nPanitia SPMB SMK Bhakti Praja Adiwerna";
+
+        $metode = $pembayaran->tipe_pembayaran === 'offline'
+            ? 'Manual / Offline (' . ($pembayaran->payment_type ?: 'Kasir') . ')'
+            : 'Online (' . ($pembayaran->payment_type ? str_replace('_', ' ', strtoupper($pembayaran->payment_type)) : 'Midtrans') . ')';
+
+        $tanggalBayar = $pembayaran->settlement_time
+            ? Carbon::parse($pembayaran->settlement_time)->translatedFormat('d F Y H:i')
+            : Carbon::now()->translatedFormat('d F Y H:i');
+
+        $nominal = number_format($pembayaran->nominal, 0, ',', '.');
+
+        $message = str_replace(
+            ['[NAMA]', '[NOMOR_PEMBAYARAN]', '[NOMINAL]', '[METODE]', '[TANGGAL_BAYAR]'],
+            [$casis->nama_lengkap, $pembayaran->order_id, $nominal, $metode, $tanggalBayar],
+            $template
+        );
 
         return self::sendMessage($casis->no_hp_siswa, $message);
+    }
+
+    /**
+     * Send Payment Success Notification to Admin
+     */
+    public static function sendPaymentNotificationToAdmin($casis, $pembayaran): bool
+    {
+        $adminNumber = Setting::where('key', 'wa_center')->value('value');
+        
+        if (empty($adminNumber)) {
+            Log::warning('WhatsAppService: wa_center is not configured. Admin notification not sent.');
+            return false;
+        }
+
+        $metode = $pembayaran->tipe_pembayaran === 'offline'
+            ? 'Manual / Offline (' . ($pembayaran->payment_type ?: 'Kasir') . ')'
+            : 'Online (' . ($pembayaran->payment_type ? str_replace('_', ' ', strtoupper($pembayaran->payment_type)) : 'Midtrans') . ')';
+
+        $tanggalBayar = $pembayaran->settlement_time
+            ? Carbon::parse($pembayaran->settlement_time)->translatedFormat('d F Y H:i')
+            : Carbon::now()->translatedFormat('d F Y H:i');
+
+        $nominal = number_format($pembayaran->nominal, 0, ',', '.');
+        $jurusan = $casis->jurusan ? $casis->jurusan->kode : '-';
+
+        $message = "⚠️ *PEMBERITAHUAN PEMBAYARAN MASUK* ⚠️\n\n"
+                 . "Telah diterima pembayaran Daftar Ulang dari siswa:\n\n"
+                 . "Nama: *{$casis->nama_lengkap}*\n"
+                 . "No. Daftar: {$casis->no_pendaftaran}\n"
+                 . "Jurusan: {$jurusan}\n\n"
+                 . "*Rincian Transaksi:*\n"
+                 . "- No. Order: {$pembayaran->order_id}\n"
+                 . "- Nominal: Rp {$nominal}\n"
+                 . "- Metode: {$metode}\n"
+                 . "- Waktu Lunas: {$tanggalBayar}\n\n"
+                 . "Silakan verifikasi atau cetak kwitansi di Dashboard Admin jika diperlukan.";
+
+        return self::sendMessage($adminNumber, $message);
     }
 }

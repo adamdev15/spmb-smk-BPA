@@ -3,44 +3,25 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
 use App\Models\Casis;
 use App\Models\Jurusan;
 use App\Models\ProgramKeunggulan;
-use App\Models\Setting;
+use App\Models\SpmbPeriod;
+use App\Models\TahunAjaran;
 use App\Models\Pembayaran;
 use App\Services\WhatsAppService;
-use Illuminate\Http\Request;
+use App\Services\PembayaranService;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Validation\Rule;
 
 class CasisController extends Controller
 {
-    public function apiSearch(Request $request)
-    {
-        $term = $request->q;
-        if (strlen($term) < 2) {
-            return response()->json([]);
-        }
-
-        $casis = Casis::where('nama_lengkap', 'like', "%{$term}%")
-            ->orWhere('nisn', 'like', "%{$term}%")
-            ->orWhere('no_pendaftaran', 'like', "%{$term}%")
-            ->select('id', 'nama_lengkap', 'nisn', 'no_pendaftaran')
-            ->orderBy('nama_lengkap')
-            ->take(5)
-            ->get();
-
-        return response()->json($casis);
-    }
-
     public function index(Request $request)
     {
-        $query = Casis::with(['jurusan', 'programKeunggulan', 'spmbPeriod.tahunAjaran']);
-
-        $tahunAjarans = \App\Models\TahunAjaran::with('spmbPeriods')->orderBy('nama', 'desc')->get();
-        $activePeriod = \App\Models\SpmbPeriod::where('status', 'aktif')->first();
+        $jurusans = Jurusan::where('status_aktif', true)->get();
+        $tahunAjarans = TahunAjaran::with('spmbPeriods')->orderBy('nama', 'desc')->get();
+        $activePeriod = SpmbPeriod::where('status', 'aktif')->first();
 
         $selectedTahunAjaranId = $request->input('tahun_ajaran_id');
         $selectedSpmbPeriodId = $request->input('spmb_period_id');
@@ -50,15 +31,9 @@ class CasisController extends Controller
             $selectedSpmbPeriodId = $activePeriod->id;
         }
 
-        if ($selectedSpmbPeriodId) {
-            $query->where('spmb_period_id', $selectedSpmbPeriodId);
-        } elseif ($selectedTahunAjaranId) {
-            $query->whereHas('spmbPeriod', function($q) use ($selectedTahunAjaranId) {
-                $q->where('tahun_ajaran_id', $selectedTahunAjaranId);
-            });
-        }
+        $query = Casis::with(['jurusan', 'programKeunggulan', 'spmbPeriod.tahunAjaran', 'pembayaranTerakhir']);
 
-        // Search Filter (Name/NISN/No Pendaftaran)
+        // Search Filter
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
@@ -68,32 +43,45 @@ class CasisController extends Controller
             });
         }
 
-        // Filters
+        // Sumber Pendaftaran Filter
         if ($request->filled('sumber')) {
             $query->where('sumber_pendaftaran', $request->sumber);
         }
 
+        // Status Verifikasi Filter
+        if ($request->filled('status')) {
+            $query->where('status_verifikasi', $request->status);
+        }
+
+        // Status Kelulusan Filter
+        if ($request->filled('kelulusan')) {
+            $query->where('status_kelulusan', $request->kelulusan);
+        }
+
+        // Status Daftar Ulang Filter
+        if ($request->filled('daftar_ulang')) {
+            $query->where('status_daftar_ulang', $request->daftar_ulang);
+        }
+
+        // Jurusan Filter
         if ($request->filled('jurusan_id')) {
             $query->where('jurusan_id', $request->jurusan_id);
         }
 
-        if ($request->filled('status_kelulusan')) {
-            $query->where('status_kelulusan', $request->status_kelulusan);
+        // Period / Academic Year Filter
+        if ($selectedSpmbPeriodId) {
+            $query->where('spmb_period_id', $selectedSpmbPeriodId);
+        } elseif ($selectedTahunAjaranId) {
+            $query->whereHas('spmbPeriod', function($q) use ($selectedTahunAjaranId) {
+                $q->where('tahun_ajaran_id', $selectedTahunAjaranId);
+            });
         }
 
-        if ($request->filled('status_daftar_ulang')) {
-            $query->where('status_daftar_ulang', $request->status_daftar_ulang);
-        }
-
-        $casis = $query->latest()->paginate(15)->withQueryString();
-        $jurusans = Jurusan::where('status_aktif', true)->get();
+        $casis = $query->latest()->paginate(20)->withQueryString();
 
         return view('admin.casis.index', compact(
-            'casis', 
-            'jurusans', 
-            'tahunAjarans', 
-            'selectedTahunAjaranId', 
-            'selectedSpmbPeriodId'
+            'casis', 'jurusans', 'tahunAjarans', 'activePeriod', 
+            'selectedTahunAjaranId', 'selectedSpmbPeriodId'
         ));
     }
 
@@ -101,111 +89,211 @@ class CasisController extends Controller
     {
         $jurusans = Jurusan::where('status_aktif', true)->get();
         $programs = ProgramKeunggulan::where('status_aktif', true)->get();
+        $periods = SpmbPeriod::with('tahunAjaran')->where('status', 'aktif')->get();
+
         $ketrampilan = DB::table('master_ketrampilan')->get();
         $hobi = DB::table('master_hobi')->get();
         $cita = DB::table('master_cita')->get();
+        $pendidikan = DB::table('master_pendidikan')->get();
+        $pekerjaan = DB::table('master_pekerjaan')->get();
+        $penghasilan = DB::table('master_penghasilan')->get();
         $orientasi = DB::table('master_orientasi_ortu')->get();
 
-        return view('admin.casis.form', compact('jurusans', 'programs', 'ketrampilan', 'hobi', 'cita', 'orientasi'));
+        return view('admin.casis.form', compact(
+            'jurusans', 'programs', 'periods', 'ketrampilan', 'hobi', 
+            'cita', 'pendidikan', 'pekerjaan', 'penghasilan', 'orientasi'
+        ));
     }
 
     public function store(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'nama_lengkap' => 'required|string|max:255',
             'nisn' => 'required|string|unique:casis,nisn',
-            'jurusan_id' => 'required|exists:master_jurusan,id',
+            'nik' => 'nullable|string',
+            'no_kk' => 'nullable|string',
             'jk' => 'required|in:L,P',
-            'no_hp_siswa' => 'required|string',
+            'tempat_lahir' => 'nullable|string',
+            'tgl_lahir' => 'nullable|date',
+            'agama' => 'required|string',
+            'no_hp_siswa' => 'nullable|string',
+            'alamat_siswa' => 'nullable|string',
+            'nama_ayah' => 'nullable|string|max:255',
+            'nama_ibu' => 'nullable|string|max:255',
+            'rt' => 'nullable|string',
+            'rw' => 'nullable|string',
+            'kecamatan' => 'nullable|string',
+            'kab_kota' => 'nullable|string',
+            'nama_sekolah' => 'nullable|string',
+            'alamat_sekolah' => 'nullable|string',
+            'jurusan_id' => 'required|exists:master_jurusan,id',
+            'program_keunggulan_id' => 'nullable|exists:program_keunggulan,id',
+            'spmb_period_id' => 'nullable|exists:spmb_periods,id',
             'sumber_pendaftaran' => 'required|in:online,offline',
+            'password' => 'nullable|string|min:6',
+            'pas_foto' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+            'fc_kk' => 'nullable|mimes:jpeg,png,jpg,pdf|max:2048',
+            'fc_akta' => 'nullable|mimes:jpeg,png,jpg,pdf|max:2048',
+            'fc_ijazah' => 'nullable|mimes:jpeg,png,jpg,pdf|max:2048',
         ]);
 
         $year = date('Y');
-        $prefix = Setting::where('key', 'prefix_no_pendaftaran')->value('value') ?: "BPA-$year-";
-        $lastCasis = Casis::where('no_pendaftaran', 'LIKE', "$prefix%")
-            ->latest()
-            ->first();
+        $count = Casis::whereYear('created_at', $year)->count() + 1;
+        $no_pendaftaran = 'BPA-' . $year . '-' . str_pad($count, 4, '0', STR_PAD_LEFT);
 
-        $nextId = 1;
-        if ($lastCasis) {
-            $parts = explode('-', $lastCasis->no_pendaftaran);
-            $lastSeq = (int)end($parts);
-            $nextId = $lastSeq + 1;
-        }
-        $noPendaftaran = $prefix . str_pad($nextId, 4, '0', STR_PAD_LEFT);
-
-        $data = $request->except(['_token', 'password']);
-        $rawPassword = $request->filled('password') ? $request->password : $request->nisn;
-        $data['password'] = Hash::make($rawPassword);
-        $data['no_pendaftaran'] = $noPendaftaran;
-        $data['status_pendaftaran'] = 'Submitted';
-        $data['status_verifikasi'] = 'Diverifikasi'; // Admin manual entry is pre-verified
-
-        $activePeriod = \App\Models\SpmbPeriod::where('tanggal_mulai', '<=', now())
-            ->where('tanggal_selesai', '>=', now())
-            ->where('status', 'aktif')
-            ->first();
+        $validated['no_pendaftaran'] = $no_pendaftaran;
+        $validated['password'] = Hash::make($request->password ?: ($request->nisn ?: '123456'));
+        $validated['status_verifikasi'] = 'Belum Diverifikasi';
+        $validated['status_kelulusan'] = 'Proses';
+        $validated['status_daftar_ulang'] = 'Belum';
         
-        $data['spmb_period_id'] = $activePeriod ? $activePeriod->id : null;
-
-        // Convert string values to uppercase except password
-        foreach ($data as $key => $value) {
-            if (is_string($value) && $key !== 'password') {
-                $data[$key] = strtoupper($value);
+        if (empty($validated['spmb_period_id'])) {
+            $activePeriod = SpmbPeriod::where('status', 'aktif')->first();
+            if ($activePeriod) {
+                $validated['spmb_period_id'] = $activePeriod->id;
             }
         }
 
-        $casis = Casis::create($data);
+        $casis = Casis::create($validated);
 
-        return redirect()->route('admin.casis.index')->with('success', 'Data Calon Siswa (' . $casis->sumber_pendaftaran . ') berhasil ditambahkan dengan Nomor Pendaftaran: ' . $noPendaftaran);
+        if ($request->hasFile('pas_foto')) {
+            $path = $request->file('pas_foto')->store('berkas/foto', 'public');
+            $casis->berkas()->create([
+                'nama_berkas' => 'Pas Foto 3x4',
+                'path' => $path,
+                'extension' => $request->file('pas_foto')->getClientOriginalExtension(),
+                'size' => $request->file('pas_foto')->getSize()
+            ]);
+        }
+
+        $otherFiles = [
+            'fc_kk' => 'FC Kartu Keluarga',
+            'fc_akta' => 'FC Akta Kelahiran',
+            'fc_ijazah' => 'FC Ijazah / SKL'
+        ];
+
+        foreach ($otherFiles as $fileKey => $docName) {
+            if ($request->hasFile($fileKey)) {
+                $path = $request->file($fileKey)->store('berkas/dokumen', 'public');
+                $casis->berkas()->create([
+                    'nama_berkas' => $docName,
+                    'path' => $path,
+                    'extension' => $request->file($fileKey)->getClientOriginalExtension(),
+                    'size' => $request->file($fileKey)->getSize()
+                ]);
+            }
+        }
+
+        return redirect()->route('admin.casis.index')->with('success', 'Calon Siswa baru berhasil ditambahkan.');
     }
 
     public function show(Casis $casis)
     {
-        $casis->load('jurusan', 'programKeunggulan', 'berkas', 'pembayaran');
-        return view('admin.casis.show', compact('casis'));
+        $casis->load(['jurusan', 'programKeunggulan', 'spmbPeriod.tahunAjaran', 'pembayaran' => function($q) {
+            $q->orderBy('created_at', 'desc');
+        }, 'berkas']);
+        
+        $pembayaran = $casis->pembayaranTerakhir;
+        return view('admin.casis.show', compact('casis', 'pembayaran'));
     }
 
     public function edit(Casis $casis)
     {
         $jurusans = Jurusan::where('status_aktif', true)->get();
         $programs = ProgramKeunggulan::where('status_aktif', true)->get();
+        $periods = SpmbPeriod::with('tahunAjaran')->get();
+
         $ketrampilan = DB::table('master_ketrampilan')->get();
         $hobi = DB::table('master_hobi')->get();
         $cita = DB::table('master_cita')->get();
-        $orientasi = DB::table('master_orientasi_ortu')->get();
         $pendidikan = DB::table('master_pendidikan')->get();
         $pekerjaan = DB::table('master_pekerjaan')->get();
         $penghasilan = DB::table('master_penghasilan')->get();
+        $orientasi = DB::table('master_orientasi_ortu')->get();
 
-        return view('admin.casis.form', compact('casis', 'jurusans', 'programs', 'ketrampilan', 'hobi', 'cita', 'orientasi', 'pendidikan', 'pekerjaan', 'penghasilan'));
+        return view('admin.casis.form', compact(
+            'casis', 'jurusans', 'programs', 'periods', 'ketrampilan', 
+            'hobi', 'cita', 'pendidikan', 'pekerjaan', 'penghasilan', 'orientasi'
+        ));
     }
 
     public function update(Request $request, Casis $casis)
     {
-        $request->validate([
+        $validated = $request->validate([
             'nama_lengkap' => 'required|string|max:255',
-            'nisn' => ['required', 'string', Rule::unique('casis')->ignore($casis->id)],
-            'jurusan_id' => 'required|exists:master_jurusan,id',
+            'nisn' => 'required|string|unique:casis,nisn,' . $casis->id,
+            'nik' => 'nullable|string',
+            'no_kk' => 'nullable|string',
             'jk' => 'required|in:L,P',
-            'no_hp_siswa' => 'required|string',
+            'tempat_lahir' => 'nullable|string',
+            'tgl_lahir' => 'nullable|date',
+            'agama' => 'required|string',
+            'no_hp_siswa' => 'nullable|string',
+            'alamat_siswa' => 'nullable|string',
+            'nama_ayah' => 'nullable|string|max:255',
+            'nama_ibu' => 'nullable|string|max:255',
+            'rt' => 'nullable|string',
+            'rw' => 'nullable|string',
+            'kecamatan' => 'nullable|string',
+            'kab_kota' => 'nullable|string',
+            'nama_sekolah' => 'nullable|string',
+            'alamat_sekolah' => 'nullable|string',
+            'jurusan_id' => 'required|exists:master_jurusan,id',
+            'program_keunggulan_id' => 'nullable|exists:program_keunggulan,id',
+            'spmb_period_id' => 'nullable|exists:spmb_periods,id',
+            'status_verifikasi' => 'nullable|in:Belum Diverifikasi,Diverifikasi',
+            'status_kelulusan' => 'nullable|in:Proses,Lulus,Tidak Lulus,Cadangan',
+            'status_daftar_ulang' => 'nullable|in:Belum,Sudah',
+            'pas_foto' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+            'fc_kk' => 'nullable|mimes:jpeg,png,jpg,pdf|max:2048',
+            'fc_akta' => 'nullable|mimes:jpeg,png,jpg,pdf|max:2048',
+            'fc_ijazah' => 'nullable|mimes:jpeg,png,jpg,pdf|max:2048',
         ]);
 
-        $data = $request->except(['_token', '_method', 'password']);
-
         if ($request->filled('password')) {
-            $data['password'] = Hash::make($request->password);
+            $validated['password'] = Hash::make($request->password);
         }
 
-        foreach ($data as $key => $value) {
-            if (is_string($value) && $key !== 'password') {
-                $data[$key] = strtoupper($value);
+        $casis->update($validated);
+
+        if ($request->hasFile('pas_foto')) {
+            $path = $request->file('pas_foto')->store('berkas/foto', 'public');
+            $casis->berkas()->updateOrCreate(
+                ['nama_berkas' => 'Pas Foto 3x4'],
+                [
+                    'path' => $path,
+                    'extension' => $request->file('pas_foto')->getClientOriginalExtension(),
+                    'size' => $request->file('pas_foto')->getSize()
+                ]
+            );
+        }
+
+        $otherFiles = [
+            'fc_kk' => 'FC Kartu Keluarga',
+            'fc_akta' => 'FC Akta Kelahiran',
+            'fc_ijazah' => 'FC Ijazah / SKL'
+        ];
+
+        foreach ($otherFiles as $fileKey => $docName) {
+            if ($request->hasFile($fileKey)) {
+                $path = $request->file($fileKey)->store('berkas/dokumen', 'public');
+                $casis->berkas()->updateOrCreate(
+                    ['nama_berkas' => $docName],
+                    [
+                        'path' => $path,
+                        'extension' => $request->file($fileKey)->getClientOriginalExtension(),
+                        'size' => $request->file($fileKey)->getSize()
+                    ]
+                );
             }
         }
 
-        $casis->update($data);
+        // If verified or graduated, automatically issue re-enrollment billing
+        if ($casis->isVerified()) {
+            PembayaranService::createOrGetTagihanDaftarUlang($casis, true);
+        }
 
-        return redirect()->route('admin.casis.index')->with('success', 'Data Calon Siswa berhasil diperbarui.');
+        return redirect()->route('admin.casis.show', $casis->id)->with('success', 'Data Calon Siswa berhasil diperbarui.');
     }
 
     public function updateSelection(Request $request, $id)
@@ -225,8 +313,10 @@ class CasisController extends Controller
 
         $casis->update($validated);
 
-        // Send WhatsApp Notification if status is Lulus/Tidak Lulus/Cadangan
-        if ($validated['status_kelulusan'] !== 'Proses') {
+        // If Lulus, automatically create re-enrollment billing & notify WA
+        if ($validated['status_kelulusan'] === 'Lulus') {
+            PembayaranService::createOrGetTagihanDaftarUlang($casis, true);
+        } elseif ($validated['status_kelulusan'] !== 'Proses') {
             WhatsAppService::sendRegistrationSuccess($casis);
         }
 
@@ -240,27 +330,34 @@ class CasisController extends Controller
         $request->validate([
             'status_daftar_ulang' => 'required|in:Belum,Sudah',
             'nominal' => 'nullable|numeric',
-            'catatan_admin' => 'nullable|string'
+            'payment_type' => 'nullable|string',
+            'nomor_referensi' => 'nullable|string',
+            'catatan_admin' => 'nullable|string',
+            'paid_at' => 'nullable|date'
         ]);
 
-        $casis->status_daftar_ulang = $request->status_daftar_ulang;
-        $casis->tgl_daftar_ulang = ($request->status_daftar_ulang === 'Sudah') ? now() : null;
-        $casis->save();
-
         if ($request->status_daftar_ulang === 'Sudah') {
-            $nominal = $request->nominal ?: ($casis->jurusan ? $casis->jurusan->biaya_daftar_ulang : 1500000);
-            Pembayaran::create([
-                'casis_id' => $casis->id,
-                'order_id' => 'OFFLINE-PAY-' . $casis->id . '-' . time(),
-                'tipe_pembayaran' => 'offline',
-                'nominal' => $nominal,
-                'transaction_status' => 'settlement',
-                'settlement_time' => now(),
-                'catatan_admin' => $request->catatan_admin ?: 'Verifikasi Kasir Sekolah (Offline)'
-            ]);
+            PembayaranService::processManualPayment($casis, [
+                'nominal' => $request->nominal,
+                'payment_type' => $request->payment_type ?: 'Tunai',
+                'nomor_referensi' => $request->nomor_referensi,
+                'catatan_admin' => $request->catatan_admin ?: 'Pembayaran Manual Kasir Sekolah (Offline)',
+                'paid_at' => $request->paid_at ?: now(),
+                'transaction_status' => 'settlement'
+            ], auth()->user());
+        } else {
+            $casis->status_daftar_ulang = 'Belum';
+            $casis->tgl_daftar_ulang = null;
+            $casis->save();
+
+            // Set payment back to pending if exists
+            $p = $casis->pembayaranDaftarUlang;
+            if ($p) {
+                $p->update(['transaction_status' => 'pending', 'settlement_time' => null]);
+            }
         }
 
-        return back()->with('success', 'Status daftar ulang & pembayaran offline berhasil diperbarui.');
+        return back()->with('success', 'Status daftar ulang & pembayaran berhasil diperbarui.');
     }
 
     public function destroy(Casis $casis)
@@ -272,7 +369,6 @@ class CasisController extends Controller
     public function sendReminder($id)
     {
         $casis = Casis::findOrFail($id);
-        
         $success = WhatsAppService::sendReminder($casis);
 
         if ($success) {
@@ -368,5 +464,42 @@ class CasisController extends Controller
         };
 
         return response()->stream($callback, 200, $headers);
+    }
+
+    public function printKartu($id)
+    {
+        $casis = Casis::with(['jurusan', 'spmbPeriod.tahunAjaran'])->findOrFail($id);
+        $settings = \App\Models\Setting::all()->pluck('value', 'key');
+        $tahun_ajaran = $casis->spmbPeriod ? $casis->spmbPeriod->tahunAjaran->nama : '2026/2027';
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('casis.pdf.kartu', compact('casis', 'settings', 'tahun_ajaran'));
+        $pdf->setPaper('A4', 'landscape');
+        return $pdf->download('Kartu_Bukti_Pendaftaran_' . $casis->no_pendaftaran . '.pdf');
+    }
+
+    public function printFormulir($id)
+    {
+        $casis = Casis::with(['jurusan', 'spmbPeriod.tahunAjaran'])->findOrFail($id);
+        $settings = \App\Models\Setting::all()->pluck('value', 'key');
+        $tahun_ajaran = $casis->spmbPeriod ? $casis->spmbPeriod->tahunAjaran->nama : '2026/2027';
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('casis.pdf.formulir', compact('casis', 'settings', 'tahun_ajaran'));
+        return $pdf->download('Formulir_SPMB_' . $casis->no_pendaftaran . '.pdf');
+    }
+
+    public function printPengumuman($id)
+    {
+        $casis = Casis::with(['jurusan', 'spmbPeriod.tahunAjaran'])->findOrFail($id);
+        $settings = \App\Models\Setting::all()->pluck('value', 'key');
+        $tahun_ajaran = $casis->spmbPeriod ? $casis->spmbPeriod->tahunAjaran->nama : '2026/2027';
+        $tahun_masuk = explode('/', $tahun_ajaran)[0] ?? '2026';
+        
+        $tagihanDaftarUlang = \App\Services\PembayaranService::createOrGetTagihanDaftarUlang($casis);
+        $rincianBiaya = \App\Models\Biaya::whereHas('jurusans', function($query) use ($casis) {
+            $query->where('jurusan_id', $casis->jurusan_id);
+        })->whereIn('jenis_biaya', ['Daftar Ulang', 'SPP'])->get();
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('casis.pdf.pengumuman', compact('casis', 'tagihanDaftarUlang', 'settings', 'rincianBiaya', 'tahun_ajaran', 'tahun_masuk'));
+        return $pdf->download('Surat_Pengumuman_' . $casis->no_pendaftaran . '.pdf');
     }
 }

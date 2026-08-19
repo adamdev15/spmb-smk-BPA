@@ -9,9 +9,16 @@
                     </h1>
                     <p class="text-gray-500 text-sm mt-1">Manajemen data calon siswa dan status verifikasi berkas.</p>
                 </div>
-                <div>
+                <div class="flex items-center gap-3">
+                    <a href="{{ route('admin.casis.create') }}"
+                        class="bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-black uppercase tracking-widest px-6 py-3 rounded-2xl shadow-lg shadow-blue-200 transition-all active:scale-95 flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                        </svg>
+                        Tambah Siswa
+                    </a>
                     <a href="{{ route('admin.casis.export', request()->all()) }}"
-                        class="bg-green-600 hover:bg-green-700 text-white text-[10px] font-black uppercase tracking-widest px-8 py-3 rounded-2xl shadow-lg shadow-green-200 transition-all active:scale-95 flex items-center gap-2">
+                        class="bg-green-600 hover:bg-green-700 text-white text-[10px] font-black uppercase tracking-widest px-6 py-3 rounded-2xl shadow-lg shadow-green-200 transition-all active:scale-95 flex items-center gap-2">
                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                         </svg>
@@ -71,12 +78,6 @@
                         </select>
                     </div>
 
-                    <div>
-                    <form id="bulkVerifyForm" action="{{ route('admin.verify-bulk') }}" method="POST" class="hidden">
-                        @csrf
-                        <div id="bulkVerifyInputs"></div>
-                    </form>
-
                     <div class="mb-4 flex items-center justify-between">
                         <button type="button" onclick="submitBulkVerify()" id="btnBulkVerify" class="flex opacity-50 cursor-not-allowed bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-black capitalize tracking-widest px-6 py-3 rounded-2xl transition-all shadow-sm items-center gap-2">
                             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -85,16 +86,7 @@
                             Verifikasi Terpilih(<span id="bulkCount">0</span>)
                         </button>
                     </div>
-                </div>
-
-                    <div class="flex gap-2">
-                        @if(request()->anyFilled(['search', 'status', 'spmb_period_id']))
-                        <a href="{{ route('admin.casis.index') }}"
-                            class="bg-gray-100 hover:bg-gray-200 text-gray-600 text-[10px] font-black uppercase tracking-widest px-6 py-4 rounded-2xl transition-all flex items-center mt-6">
-                            Reset
-                        </a>
-                        @endif
-                    </div>
+               
                 </form>
 
                 <div class="overflow-x-auto">
@@ -114,9 +106,9 @@
                         </thead>
                         <tbody class="divide-y divide-gray-50 mb-5">
                             @forelse($casis as $index => $item)
-                            <tr class="hover:bg-gray-50/50 transition-all group border-b border-slate-500">
+                            <tr class="hover:bg-gray-50/50 transition-all group">
                                 <td class="px-6 py-6 text-center">
-                                    <input type="checkbox" value="{{ $item->id }}" class="casis-checkbox rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer">
+                                    <input type="checkbox" value="{{ $item->id }}" class="casis-checkbox rounded border-gray-400 text-blue-600 focus:ring-blue-500 cursor-pointer">
                                 </td>
                                 <td class="px-2 py-6">
                                     <span class="text-xs font-bold text-gray-400">{{ $casis->firstItem() + $index }}</span>
@@ -159,7 +151,7 @@
                                         <div
                                             class="flex items-center gap-2 text-amber-600 bg-amber-50 px-3 py-2 rounded-xl border border-amber-100 w-fit">
                                             <div class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></div>
-                                            <span class="text-[10px] font-black uppercase tracking-widest">Pending</span>
+                                            <span class="text-[10px] font-black tracking-widest">Pending</span>
                                         </div>
                                         <form action="{{ route('admin.casis.reminder', $item->id) }}" method="POST" class="inline-block"
                                             onsubmit="return confirm('Kirim notifikasi pengingat ke WhatsApp {{ $item->nama_lengkap }}?')">
@@ -177,12 +169,17 @@
                                 <td class="px-4 py-2 text-right">
                                     <div class="flex items-center justify-end gap-2">
                                         <a href="{{ route('admin.casis.show', $item->id) }}"
-                                            class="bg-white hover:bg-gray-100 text-gray-600 text-[10px] font-black uppercase tracking-widest px-2 py-1.5 rounded-xl border border-gray-100 transition-all active:scale-95 shadow-sm">
-                                            Lihat
+                                            class="p-2 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-lg transition-all" title="Lihat">
+                                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                            </svg>
                                         </a>
                                         <a href="{{ route('admin.casis.edit', $item->id) }}"
-                                            class="bg-amber-400 hover:bg-amber-500 text-white text-[10px] font-black uppercase tracking-widest px-2 py-1.5 rounded-xl shadow-lg shadow-amber-200 transition-all active:scale-95">
-                                            Edit
+                                            class="p-2 bg-amber-50 text-amber-600 hover:bg-amber-100 rounded-lg transition-all" title="Edit">
+                                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                            </svg>
                                         </a>
                                         <form action="{{ route('admin.casis.destroy', $item->id) }}" method="POST"
                                             class="inline-block"
@@ -190,8 +187,10 @@
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit"
-                                                class="bg-red-50 hover:bg-red-600 hover:text-white text-red-600 text-[10px] font-black uppercase tracking-widest px-2 py-1.5 rounded-xl border border-red-100 transition-all active:scale-95">
-                                                Hapus
+                                                class="p-2 bg-red-50 text-red-600 hover:bg-red-100 rounded-lg transition-all" title="Hapus">
+                                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                </svg>
                                             </button>
                                         </form>
                                     </div>
@@ -228,6 +227,12 @@
         </div>
     </div>
 
+    <form id="bulkVerifyForm" action="{{ route('admin.verify-bulk') }}" method="POST" class="hidden">
+        @csrf
+        <div id="bulkVerifyInputs"></div>
+    </form>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
         function toggleSelectAll(source) {
             const checkboxes = document.querySelectorAll('.casis-checkbox');

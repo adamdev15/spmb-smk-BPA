@@ -11,7 +11,7 @@ class ProgramKeunggulanController extends Controller
 {
     public function index()
     {
-        $programs = ProgramKeunggulan::with('jurusan')->get();
+        $programs = ProgramKeunggulan::with('jurusan')->paginate(10);
         $jurusans = Jurusan::where('status_aktif', true)->get();
         return view('admin.program_keunggulan.index', compact('programs', 'jurusans'));
     }

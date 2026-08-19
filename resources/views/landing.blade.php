@@ -286,7 +286,7 @@
                             Daftar Online <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
                         </button>
                         <a href="{{ route('casis.login') }}" class="w-full sm:w-auto px-8 py-3.5 bg-transparent hover:bg-white/10 text-white border-2 border-white rounded-md font-bold text-sm tracking-wide transition flex items-center justify-center gap-2 uppercase backdrop-blur-sm">
-                            Login Casis <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+                            Login Siswa <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
                         </a>
                     </div>
                 </div>
@@ -516,10 +516,10 @@
                     </div>
                     <div class="bg-slate-50 rounded-xl p-3 text-center border border-slate-100">
                         <span class="text-xs font-bold text-blue-600 block">
-                            @if(!empty($settings['jadwal_tes_mulai']) && !empty($settings['jadwal_tes_selesai']))
-                                {{ \Carbon\Carbon::parse($settings['jadwal_tes_mulai'])->locale('id')->translatedFormat('l, d M Y') }}
-                                -
-                                {{ \Carbon\Carbon::parse($settings['jadwal_tes_selesai'])->locale('id')->translatedFormat('l, d M Y') }}
+                            @if(isset($activePeriod) && $activePeriod)
+                                {{ \Carbon\Carbon::parse($activePeriod->tanggal_mulai)->locale('id')->translatedFormat('l, d F Y') }} -
+                                <br>
+                                {{ \Carbon\Carbon::parse($activePeriod->tanggal_selesai)->locale('id')->translatedFormat('l, d F Y') }}
                             @else
                                 Menunggu Jadwal
                             @endif
@@ -552,7 +552,7 @@
                         <h4 class="text-lg font-bold text-slate-900 font-heading mb-2">Hasil Pengumuman</h4>
                         <p class="text-xs text-slate-500 leading-relaxed mb-4">Pengumuman hasil akhir penerimaan peserta didik baru.</p>
                     </div>
-                    <div class="bg-slate-50 rounded-xl p-3 text-center border border-slate-100">
+                    <div class="bg-slate-50 rounded-xl p-3 text-center border border-slate-100 flex flex-col gap-2">
                         <span class="text-xs font-bold text-blue-600 block">
                             @if(!empty($settings['jadwal_pengumuman']))
                                 {{ \Carbon\Carbon::parse($settings['jadwal_pengumuman'])->locale('id')->translatedFormat('l, d M Y') }}
@@ -560,6 +560,9 @@
                                 Menunggu Jadwal
                             @endif
                         </span>
+                        <a href="{{ route('preview.hasil.pengumuman') }}" target="_blank" class="mt-1 inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-bold py-2 px-3 rounded-lg transition-all shadow-sm">
+                            Hasil Pengumuman
+                        </a>
                     </div>
                 </div>
             </div>

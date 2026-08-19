@@ -114,7 +114,7 @@
             <!-- Jurusan Quota Progress Cards -->
             <div class="mb-8">
                 <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-lg font-bold text-slate-900 font-heading">Status Kuota Per Program Keahlian</h3>
+                    <h3 class="text-sm font-bold text-slate-900 font-heading">Status Kuota Per Program Keahlian</h3>
                     <a href="{{ route('admin.jurusans.index') }}" class="text-xs font-bold text-blue-600 hover:underline">Kelola Kuota Jurusan →</a>
                 </div>
                 
@@ -149,7 +149,7 @@
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8" x-data="dashboardCharts()">
                 <!-- Chart 1: Pendaftar per Jurusan -->
                 <div class="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-sm">
-                    <h4 class="text-base font-bold text-slate-900 font-heading mb-1">Grafik Pendaftar per Jurusan</h4>
+                    <h4 class="text-sm font-bold text-slate-900 font-heading mb-1">Grafik Pendaftar per Jurusan</h4>
                     <p class="text-xs text-slate-500 mb-4">Jumlah calon siswa berdasarkan pilihan program keahlian</p>
                     <div class="h-64 relative">
                         <canvas id="jurusanChart"></canvas>
@@ -158,7 +158,7 @@
 
                 <!-- Chart 2: Pendaftar 7 Hari Terakhir -->
                 <div class="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-sm">
-                    <h4 class="text-base font-bold text-slate-900 font-heading mb-1">Tren Pendaftaran 7 Hari Terakhir</h4>
+                    <h4 class="text-sm font-bold text-slate-900 font-heading mb-1">Tren Pendaftaran 7 Hari Terakhir</h4>
                     <p class="text-xs text-slate-500 mb-4">Jumlah pendaftar harian ke sistem SPMB</p>
                     <div class="h-64 relative">
                         <canvas id="trendChart"></canvas>
@@ -170,7 +170,7 @@
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8" x-data="dashboardChartsRow2()">
                 <!-- Chart 3: Pembayaran Daftar Ulang -->
                 <div class="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-sm">
-                    <h4 class="text-base font-bold text-slate-900 font-heading mb-1">Pembayaran Daftar Ulang 7 Hari Terakhir</h4>
+                    <h4 class="text-sm font-bold text-slate-900 font-heading mb-1">Pembayaran Daftar Ulang 7 Hari Terakhir</h4>
                     <p class="text-xs text-slate-500 mb-4">Jumlah transaksi daftar ulang per hari</p>
                     <div class="h-64 relative">
                         <canvas id="paymentChart"></canvas>
@@ -181,7 +181,7 @@
                 <div class="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-sm flex flex-col">
                     <div class="flex justify-between items-start mb-4">
                         <div>
-                            <h4 class="text-base font-bold text-slate-900 font-heading mb-1">Total Pendaftar</h4>
+                            <h4 class="text-sm font-bold text-slate-900 font-heading mb-1">Total Pendaftar</h4>
                             <p class="text-xs text-slate-500">Berdasarkan kategori terpilih</p>
                         </div>
                         <select x-model="pieType" @change="updatePieChart()" class="bg-slate-50 border-none rounded-xl text-xs font-bold text-slate-700 px-3 py-1.5 focus:ring-2 focus:ring-blue-500/20 cursor-pointer">
@@ -201,7 +201,7 @@
             <div class="bg-white rounded-3xl shadow-sm border border-slate-200/80 overflow-hidden">
                 <div class="p-6 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div>
-                        <h3 class="text-lg font-bold text-slate-900 font-heading">Pendaftar Terbaru</h3>
+                        <h3 class="text-sm font-bold text-slate-900 font-heading">Pendaftar Terbaru</h3>
                         <p class="text-xs text-slate-500">Daftar calon siswa yang baru mendaftar (Online & Offline)</p>
                     </div>
                     <a href="{{ route('admin.casis.index') }}" class="text-xs font-bold text-blue-600 hover:underline">

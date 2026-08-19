@@ -94,12 +94,7 @@ class SettingSeeder extends Seeder
             ],
 
             // Default Fee & Registration Prefix Settings
-            [
-                'key' => 'biaya_daftar_ulang_global',
-                'name' => 'Biaya Daftar Ulang Global (Default jika jurusan 0)',
-                'value' => '1500000',
-                'type' => 'number'
-            ],
+
             [
                 'key' => 'prefix_no_pendaftaran',
                 'name' => 'Prefix Nomor Pendaftaran',
@@ -168,9 +163,9 @@ class SettingSeeder extends Seeder
             ],
             [
                 'key' => 'alur_spmb_gambar',
-                'name' => 'Gambar Alur SPMB (URL/Path)',
+                'name' => 'Gambar Alur SPMB (Upload Gambar)',
                 'value' => 'images/alur-pendaftaran.png',
-                'type' => 'text'
+                'type' => 'file'
             ],
             [
                 'key' => 'alur_spmb_konten',

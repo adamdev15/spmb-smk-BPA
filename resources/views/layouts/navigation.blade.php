@@ -28,7 +28,7 @@
 
                     <x-nav-link :href="route('admin.casis.index')" :active="request()->routeIs('admin.casis.*')"
                         class="px-4 py-2 text-xs font-bold uppercase tracking-wider rounded-xl transition text-slate-700 hover:text-blue-600">
-                        {{ __('Pendaftar') }}
+                        {{ __('Siswa') }}
                     </x-nav-link>
                     <x-nav-link :href="route('admin.pembayaran.index')" :active="request()->routeIs('admin.pembayaran.*')"
                         class="px-4 py-2 text-xs font-bold uppercase tracking-wider rounded-xl transition text-slate-700 hover:text-blue-600">
@@ -48,6 +48,9 @@
                             </x-slot>
                             <x-slot name="content">
                                 <div class="p-2">
+                                    <x-dropdown-link :href="route('admin.biaya.index')" :active="request()->routeIs('admin.biaya.*')" class="rounded-xl text-xs font-bold mt-1">
+                                        {{ __('Master Biaya') }}
+                                    </x-dropdown-link>
                                     <x-dropdown-link :href="route('admin.jurusans.index')" :active="request()->routeIs('admin.jurusans.*')" class="rounded-xl text-xs font-bold">
                                         {{ __('Master Jurusan') }}
                                     </x-dropdown-link>
@@ -57,6 +60,7 @@
                                     <x-dropdown-link :href="route('admin.jadwals.index')" :active="request()->routeIs('admin.jadwals.*')" class="rounded-xl text-xs font-bold mt-1">
                                         {{ __('Jadwal SPMB') }}
                                     </x-dropdown-link>
+                                    
                                 </div>
                             </x-slot>
                         </x-dropdown>
@@ -77,7 +81,7 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                             </svg>
                         </div>
-                        <input x-model="query" @input.debounce.300ms="search" @focus="open = true" @click.away="open = false" type="text" class="block w-64 pl-10 pr-3 py-2 border border-slate-200 rounded-2xl leading-5 bg-slate-50 placeholder-slate-400 focus:outline-none focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 sm:text-sm transition-all text-xs font-bold" placeholder="Cari Siswa (Nama/NISN)..." autocomplete="off">
+                        <input x-model="query" @input.debounce.300ms="search" @focus="open = true" @click.away="open = false" type="text" class="block w-45 pl-9 pr-3 py-1.5 border border-slate-200 rounded-2xl leading-5 bg-slate-50 placeholder-slate-400 focus:outline-none focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 sm:text-xs transition-all text-xs font-bold" placeholder="Cari Siswa (Nama/NISN)..." autocomplete="off">
                     </div>
                     
                     <!-- Dropdown Results -->
@@ -278,11 +282,17 @@
                     </svg>
                 </button>
                 <div x-show="masterDataOpen" class="pl-4 mt-1 space-y-1">
+                    <x-responsive-nav-link :href="route('admin.biaya.index')" :active="request()->routeIs('admin.biaya.*')" class="rounded-xl font-bold text-xs">
+                        {{ __('Master Biaya') }}
+                    </x-responsive-nav-link>
                     <x-responsive-nav-link :href="route('admin.jurusans.index')" :active="request()->routeIs('admin.jurusans.*')" class="rounded-xl font-bold text-xs">
                         {{ __('Master Jurusan') }}
                     </x-responsive-nav-link>
                     <x-responsive-nav-link :href="route('admin.program-keunggulan.index')" :active="request()->routeIs('admin.program-keunggulan.*')" class="rounded-xl font-bold text-xs">
                         {{ __('Program Keunggulan') }}
+                    </x-responsive-nav-link>
+                    <x-responsive-nav-link :href="route('admin.jadwals.index')" :active="request()->routeIs('admin.jadwals.*')" class="rounded-xl text-xs font-bold mt-1">
+                        {{ __('Jadwal SPMB') }}
                     </x-responsive-nav-link>
                 </div>
             </div>

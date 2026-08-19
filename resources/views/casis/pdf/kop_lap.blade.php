@@ -33,9 +33,7 @@
     <!-- ALAMAT FULL WIDTH -->
     <tr>
         <td colspan="3" align="center" style="font-size:11px; padding-top:5px; line-height:1.5;">
-            Alamat: Jl. KH. Wahid Hasyim No. 125 Adiwerna, Tegal 52165 | (0283)-4541933
-            <br>
-            Website: https://smkbpadw.sch.id | E-mail: smkbpadw@gmail.com | Tegal 52194
+            Alamat: Jl. KH. Wahid Hasyim No. 125 Adiwerna, Telp. (0283)-4541933 Website: https://smkbpadw.sch.id | E-mail: smkbpadw@gmail.com | Tegal 52194
         </td>
     </tr>
 

@@ -38,6 +38,11 @@ class Casis extends Authenticatable
         return $this->hasOne(Pembayaran::class, 'casis_id')->latestOfMany();
     }
 
+    public function pembayaranDaftarUlang()
+    {
+        return $this->hasOne(Pembayaran::class, 'casis_id')->where('jenis_pembayaran', 'daftar_ulang')->latestOfMany();
+    }
+
     public function nilaiRapor()
     {
         return $this->hasMany(NilaiRapor::class, 'casis_id');
@@ -46,5 +51,15 @@ class Casis extends Authenticatable
     public function berkas()
     {
         return $this->hasMany(CasisBerkas::class, 'casis_id');
+    }
+
+    public function isVerified(): bool
+    {
+        return $this->status_verifikasi === 'Diverifikasi' || $this->status_kelulusan === 'Lulus';
+    }
+
+    public function isLunasDaftarUlang(): bool
+    {
+        return $this->status_daftar_ulang === 'Sudah';
     }
 }

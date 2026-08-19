@@ -1,58 +1,60 @@
 <x-app-layout>
-    <div class="py-8 bg-slate-50 min-h-screen" x-data="programCrud()" x-init="init()">
+    <div class="py-8 bg-gray-50 min-h-screen" x-data="programCrud()" x-init="init()">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
-            <!-- Header -->
+            <!-- Header Section -->
             <div class="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
                 <div>
-                    <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight font-heading">Master Program Keunggulan</h1>
-                    <p class="text-slate-500 text-sm mt-1">Kelola kelas binaan industri dan program khusus SPMB.</p>
+                    <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight italic uppercase">Master Program Keunggulan</h1>
+                    <p class="text-gray-500 text-sm mt-1">Kelola kelas binaan industri dan program khusus SPMB.</p>
                 </div>
-                <button @click="openModal('create')" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold uppercase tracking-widest px-6 py-3 rounded-2xl shadow-lg shadow-blue-200 transition transform hover:-translate-y-0.5 flex items-center gap-2">
-                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                    </svg>
-                    Tambah Program
-                </button>
+                <div class="flex items-center gap-3">
+                    <button @click="openModal('create')" class="bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-black uppercase tracking-widest px-6 py-3 rounded-2xl shadow-lg shadow-blue-200 transition-all active:scale-95 flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                        </svg>
+                        Tambah Program
+                    </button>
+                </div>
             </div>
 
             <!-- Table Card -->
-            <div class="bg-white rounded-[2rem] shadow-sm border border-slate-200/80 overflow-hidden">
+            <div class="bg-white rounded-[2rem] shadow-sm border border-gray-100 p-8 mb-8">
                 <div class="overflow-x-auto">
-                    <table class="w-full text-sm text-left text-slate-500">
-                        <thead class="text-xs text-slate-400 uppercase tracking-wider bg-slate-50 border-b border-slate-100">
+                    <table class="w-full text-sm text-left text-gray-500">
+                        <thead class="text-[11px] text-gray-400 tracking-[0.2em] bg-gray-50/50 py-4 px-6 mb-5">
                             <tr>
-                                <th class="px-6 py-4 font-bold">Logo</th>
-                                <th class="px-6 py-4 font-bold">Nama Program / Kelas Binaan</th>
-                                <th class="px-6 py-4 font-bold text-center">Status</th>
-                                <th class="px-6 py-4 font-bold text-right">Aksi</th>
+                                <th class="px-6 py-5 font-black uppercase">Logo</th>
+                                <th class="px-6 py-5 font-black uppercase">Nama Program / Kelas Binaan</th>
+                                <th class="px-6 py-5 font-black uppercase text-center">Status</th>
+                                <th class="px-6 py-5 font-black uppercase text-right">Aksi</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-slate-100">
+                        <tbody class="divide-y divide-gray-50 mb-5">
                             @forelse($programs as $p)
-                            <tr class="hover:bg-slate-50/50 transition">
-                                <td class="px-6 py-4">
+                            <tr class="hover:bg-gray-50/50 transition-all group">
+                                <td class="px-6 py-6">
                                     <div class="w-13 h-12 flex items-center justify-center overflow-hidden">
                                         @if($p->logo)
                                             <img src="{{ asset('storage/' . $p->logo) }}" alt="{{ $p->nama }}" class="w-full h-full object-contain p-1">
                                         @else
-                                            <span class="text-slate-400 text-xs font-bold">No Logo</span>
+                                            <span class="text-gray-400 text-xs font-bold">No Logo</span>
                                         @endif
                                     </div>
                                 </td>
-                                <td class="px-6 py-4">
-                                    <div class="font-bold text-slate-900">{{ $p->nama }}</div>
-                                    <div class="text-xs text-slate-500 truncate max-w-xs mt-1" title="{{ $p->deskripsi }}">{{ $p->deskripsi ?: '-' }}</div>
+                                <td class="px-6 py-6">
+                                    <div class="font-bold text-gray-900">{{ $p->nama }}</div>
+                                    <div class="text-xs text-gray-500 truncate max-w-xs mt-1" title="{{ $p->deskripsi }}">{{ $p->deskripsi ?: '-' }}</div>
                                     @if($p->jurusan_id && $p->jurusan)
-                                        <div class="mt-2"><span class="bg-blue-50 text-blue-700 text-[10px] font-black px-2 py-0.5 rounded-lg border border-blue-100">{{ $p->jurusan->kode }}</span></div>
+                                        <div class="mt-2"><span class="bg-blue-50 text-blue-700 text-[10px] font-black px-2 py-1 rounded-lg border border-blue-100 uppercase tracking-widest">{{ $p->jurusan->kode }}</span></div>
                                     @endif
                                 </td>
-                                <td class="px-6 py-4 text-center">
-                                    <span class="px-3 py-1 rounded-full text-[10px] font-bold uppercase {{ $p->status_aktif ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700' }}">
+                                <td class="px-6 py-6 text-center">
+                                    <span class="px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest {{ $p->status_aktif ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-red-50 text-red-600 border border-red-100' }}">
                                         {{ $p->status_aktif ? 'Aktif' : 'Non-Aktif' }}
                                     </span>
                                 </td>
-                                <td class="px-6 py-4 text-right">
+                                <td class="px-6 py-6 text-right">
                                     <div class="flex items-center justify-end gap-2">
                                         <button @click="openModal('edit', {{ $p->toJson() }})" class="p-2 bg-amber-50 text-amber-600 hover:bg-amber-100 rounded-lg transition">
                                             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -68,13 +70,25 @@
                                 </td>
                             </tr>
                             @empty
-                            <tr>
-                                <td colspan="4" class="px-6 py-12 text-center text-slate-400">Belum ada data program keunggulan.</td>
+                            <tr class="mt-11">
+                                <td colspan="4" class="mt-11 px-8 py-20 text-center">
+                                    <div class="flex flex-col items-center justify-center gap-4">
+                                        <div class="w-16 h-16 bg-gray-50 rounded-2xl flex items-center justify-center text-gray-400">
+                                            <svg class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                                            </svg>
+                                        </div>
+                                        <p class="text-[11px] font-black uppercase tracking-[0.2em] text-gray-400">Belum ada data program keunggulan.</p>
+                                    </div>
+                                </td>
                             </tr>
                             @endforelse
                         </tbody>
                     </table>
                 </div>
+            </div>
+            <div class="mt-4">
+                {{ $programs->links() }}
             </div>
         </div>
 

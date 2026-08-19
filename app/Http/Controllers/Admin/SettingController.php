@@ -16,10 +16,27 @@ class SettingController extends Controller
         // Group settings by category
         $groupedSettings = [
             'Landing Page' => $settings->filter(function($setting) {
-                return in_array($setting->key, ['logo', 'nama_sekolah', 'tagline_sekolah', 'landing_hero', 'deskripsi_hero', 'tahun_ajaran', 'brosur']);
+                return in_array($setting->key, ['logo', 'nama_sekolah', 'tagline_sekolah', 'landing_hero', 'deskripsi_hero', 'tahun_ajaran', 'brosur', 'singkatan_sekolah', 'alamat_sekolah', 'telepon_sekolah', 'email_sekolah', 'pengumuman_nama_kepsek', 'pengumuman_nip_kepsek']);
+            })->sortBy(function($setting) {
+                $order = [
+                    'nama_sekolah' => 1,
+                    'singkatan_sekolah' => 2,
+                    'tagline_sekolah' => 3,
+                    'alamat_sekolah' => 4,
+                    'email_sekolah' => 5,
+                    'telepon_sekolah' => 6,
+                    'logo' => 7,
+                    'landing_hero' => 8,
+                    'deskripsi_hero' => 9,
+                    'brosur' => 10,
+                    'tahun_ajaran' => 11,
+                    'pengumuman_nama_kepsek' => 12,
+                    'pengumuman_nip_kepsek' => 13
+                ];
+                return $order[$setting->key] ?? 99;
             }),
             'Jadwal' => $settings->filter(function($setting) {
-                return str_starts_with($setting->key, 'jadwal_');
+                return str_starts_with($setting->key, 'jadwal_') || in_array($setting->key, ['pengumuman_tgl_mpls', 'pengumuman_tgl_masuk']);
             }),
             'Kontak' => $settings->filter(function($setting) {
                 return str_starts_with($setting->key, 'kontak_');
@@ -31,13 +48,19 @@ class SettingController extends Controller
                 return str_starts_with($setting->key, 'alur_daftar_ulang_');
             }),
             'WhatsApp' => $settings->filter(function($setting) {
-                return in_array($setting->key, ['fonnte_token', 'template_pesan_pendaftaran', 'template_pesan', 'wa_pesan_ingatkan', 'wa_pesan_daftar_ulang', 'wa_pesan_kelulusan']);
+                return in_array($setting->key, ['fonnte_status', 'fonnte_token', 'template_pesan_pendaftaran', 'template_pesan', 'wa_pesan_ingatkan', 'wa_pesan_daftar_ulang', 'wa_pesan_kelulusan', 'wa_pesan_tagihan_daftar_ulang', 'wa_pesan_pembayaran_sukses']);
+            })->sortBy(function($setting) {
+                $order = ['fonnte_token' => 1, 'fonnte_status' => 2, 'template_pesan_pendaftaran' => 3, 'wa_pesan_ingatkan' => 4, 'wa_pesan_daftar_ulang' => 5, 'wa_pesan_kelulusan' => 6, 'wa_pesan_tagihan_daftar_ulang' => 7, 'wa_pesan_pembayaran_sukses' => 8, 'template_pesan' => 9];
+                return $order[$setting->key] ?? 99;
             }),
             'Midtrans' => $settings->filter(function($setting) {
                 return str_starts_with($setting->key, 'midtrans_');
             }),
+            'Tanda Tangan & Surat' => $settings->filter(function($setting) {
+                return in_array($setting->key, ['pengumuman_ttd_kepsek', 'pengumuman_ttd_ketua', 'kwitansi_ttd_panitia', 'kwitansi_stempel_panitia']);
+            }),
             'Lainnya' => $settings->filter(function($setting) {
-                return !in_array($setting->key, ['logo', 'nama_sekolah', 'tagline_sekolah', 'landing_hero', 'deskripsi_hero', 'tahun_ajaran', 'brosur', 'fonnte_token', 'template_pesan_pendaftaran', 'template_pesan', 'wa_pesan_ingatkan', 'wa_pesan_daftar_ulang', 'wa_pesan_kelulusan']) 
+                return !in_array($setting->key, ['logo', 'nama_sekolah', 'tagline_sekolah', 'landing_hero', 'deskripsi_hero', 'tahun_ajaran', 'brosur', 'fonnte_status', 'fonnte_token', 'template_pesan_pendaftaran', 'template_pesan', 'wa_pesan_ingatkan', 'wa_pesan_daftar_ulang', 'wa_pesan_kelulusan', 'wa_pesan_tagihan_daftar_ulang', 'wa_pesan_pembayaran_sukses', 'pengumuman_ttd_kepsek', 'pengumuman_ttd_ketua', 'kwitansi_ttd_panitia', 'kwitansi_stempel_panitia', 'pengumuman_tgl_mpls', 'pengumuman_tgl_masuk', 'singkatan_sekolah', 'alamat_sekolah', 'telepon_sekolah', 'email_sekolah', 'pengumuman_nama_kepsek', 'pengumuman_nip_kepsek']) 
                     && !str_starts_with($setting->key, 'jadwal_') 
                     && !str_starts_with($setting->key, 'kontak_')
                     && !str_starts_with($setting->key, 'alur_')
@@ -147,3 +170,5 @@ class SettingController extends Controller
         }
     }
 }
+
+
