@@ -44,8 +44,10 @@ return [
         'is_3ds' => env('MIDTRANS_IS_3DS', true),
     ],
 
-    'fonnte' => [
-        'token' => env('FONNTE_TOKEN', ''),
+    'bablast' => [
+        'token'                => env('BABLAST_API_TOKEN', ''),
+        'sender_id'            => env('BABLAST_SENDER_ID', ''),
+        'webhook_verify_token' => env('BABLAST_WEBHOOK_VERIFY_TOKEN', 'smk_bpa_webhook_secret'),
     ],
 
 ];

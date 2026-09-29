@@ -668,11 +668,21 @@
         <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm" @click="showModal = false"></div>
         
         <div class="relative bg-white rounded-3xl max-w-md w-full p-8 shadow-2xl text-center z-10" @click.stop>
-            <div class="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 font-bold text-2xl">
-                ℹ️
+            <div class="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
             </div>
             <h3 class="text-xl font-bold text-slate-900 font-heading mb-2">Informasi Jadwal SPMB</h3>
             <p class="text-slate-600 text-sm mb-6" x-text="modalMessage"></p>
+            
+            <template x-if="registrationStatus === 'not_started' && countdownActive">
+                <div class="mb-6 bg-blue-600 text-white rounded-xl p-5 shadow-inner border border-blue-500">
+                    <div class="text-xs font-semibold mb-2 text-blue-100 uppercase tracking-widest" x-text="'Dibuka pada: ' + formattedStartDate"></div>
+                    <div class="text-3xl font-black tracking-widest font-heading drop-shadow-md" x-text="countdownText">00 Hari 00:00:00</div>
+                </div>
+            </template>
+
             <button @click="showModal = false" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm rounded-xl transition">
                 Tutup
             </button>
@@ -721,8 +731,19 @@
                     $deskripsiJadwal = "Silakan pantau website ini secara berkala untuk informasi terbaru.";
 
                     if ($activePeriod) {
-                        $statusJadwal = "Pendaftaran Sedang Berlangsung";
-                        $deskripsiJadwal = "Saat ini pendaftaran {$activePeriod->gelombang} sedang dibuka hingga " . \Carbon\Carbon::parse($activePeriod->tanggal_selesai)->translatedFormat('d F Y') . ".";
+                        $tglMulaiActive = \Carbon\Carbon::parse($activePeriod->tanggal_mulai)->startOfDay();
+                        $tglSelesaiActive = \Carbon\Carbon::parse($activePeriod->tanggal_selesai)->endOfDay();
+                        
+                        if ($sekarang->lt($tglMulaiActive)) {
+                            $statusJadwal = "Pendaftaran Belum Dibuka";
+                            $deskripsiJadwal = "Pendaftaran {$activePeriod->gelombang} akan dibuka pada tanggal " . $tglMulaiActive->translatedFormat('d F Y') . ".";
+                        } elseif ($sekarang->gt($tglSelesaiActive)) {
+                            $statusJadwal = "Pendaftaran Telah Ditutup";
+                            $deskripsiJadwal = "Masa pendaftaran {$activePeriod->gelombang} telah berakhir.";
+                        } else {
+                            $statusJadwal = "Pendaftaran Sedang Berlangsung";
+                            $deskripsiJadwal = "Saat ini pendaftaran {$activePeriod->gelombang} sedang dibuka hingga " . $tglSelesaiActive->translatedFormat('d F Y') . ".";
+                        }
                     } elseif ($jadwals->count() > 0) {
                         $upcoming = $jadwals->where('tanggal_mulai', '>', $sekarang)->first();
                         if ($upcoming) {
@@ -745,9 +766,16 @@
                 @endphp
 
                 <!-- Status Banner -->
-                <div class="bg-slate-50 border border-slate-200 rounded-xl p-5 mb-5">
-                    <h4 class="text-base font-bold text-slate-800 mb-1">{{ $statusJadwal }}</h4>
-                    <p class="text-sm text-slate-500">{{ $deskripsiJadwal }}</p>
+                <div class="bg-slate-50 border border-slate-200 rounded-xl p-5 mb-5 relative overflow-hidden">
+                    <h4 class="text-base font-bold text-slate-800 mb-1 relative z-10">{{ $statusJadwal }}</h4>
+                    <p class="text-sm text-slate-500 relative z-10">{{ $deskripsiJadwal }}</p>
+
+                    <template x-if="registrationStatus === 'not_started' && countdownActive">
+                        <div class="mt-4 bg-blue-600 text-white rounded-xl p-4 shadow-inner border border-blue-500 text-center relative z-10">
+                            <div class="text-[10px] font-semibold mb-1 text-blue-100 uppercase tracking-widest" x-text="'Hitung Mundur Pembukaan'"></div>
+                            <div class="text-2xl font-black tracking-widest font-heading drop-shadow-md" x-text="countdownText">00 Hari 00:00:00</div>
+                        </div>
+                    </template>
                 </div>
 
                 <!-- Ringkasan -->
@@ -853,12 +881,50 @@
                 modalMessage: '',
                 showInfoModal: false,
                 registrationStatus: @json($registrationStatus ?? 'open'),
+                startDateStr: @json($tanggalMulai ? $tanggalMulai->toIso8601String() : null),
+                formattedStartDate: @json($tanggalMulai ? \Carbon\Carbon::parse($tanggalMulai)->translatedFormat('d F Y') : ''),
+                countdownText: '00 Hari 00:00:00',
+                countdownActive: false,
+                countdownInterval: null,
 
                 init() {
                     // Tampilkan popup informasi saat halaman diload
                     setTimeout(() => {
                         this.showInfoModal = true;
                     }, 500);
+
+                    if (this.registrationStatus === 'not_started' && this.startDateStr) {
+                        this.countdownActive = true;
+                        this.startCountdown();
+                    }
+                },
+
+                startCountdown() {
+                    const countDownDate = new Date(this.startDateStr).getTime();
+                    this.updateCountdown(countDownDate);
+                    this.countdownInterval = setInterval(() => {
+                        this.updateCountdown(countDownDate);
+                    }, 1000);
+                },
+
+                updateCountdown(countDownDate) {
+                    const now = new Date().getTime();
+                    const distance = countDownDate - now;
+
+                    if (distance < 0) {
+                        clearInterval(this.countdownInterval);
+                        this.countdownActive = false;
+                        this.registrationStatus = 'open';
+                        return;
+                    }
+
+                    const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+                    const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                    const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                    const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+                    const pad = (n) => n.toString().padStart(2, '0');
+                    this.countdownText = `${pad(days)} Hari ${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
                 },
 
                 handleDaftarClick() {

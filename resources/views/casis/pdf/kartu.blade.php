@@ -127,7 +127,7 @@
             <tr>
                 <td>ALAMAT</td>
                 <td>:</td>
-                <td>{{ $casis->alamat_siswa}}, RT {{ $casis->rt}} / RW {{ $casis->rw }}, {{ $casis->kecamatan}}, {{ $casis->kab_kota}}</td>
+                <td>{{ $casis->alamat_siswa}}, RT {{ $casis->rt}} / RW {{ $casis->rw }}, {{ $casis->kelurahan?->nama_desa_kel }}, {{ $casis->kecamatan?->nama_kec }}, {{ $casis->kabupaten?->nama_kabkota }}, {{ $casis->provinsi?->nama_provinsi }}</td>
             </tr>
         </table>
 

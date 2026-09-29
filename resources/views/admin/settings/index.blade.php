@@ -298,8 +298,8 @@
                     <div class="p-6">
                         <div class="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
                             <h4 class="text-sm font-semibold text-gray-900 mb-2">Test Koneksi WhatsApp</h4>
-                            <p class="text-xs text-gray-600 mb-4">Pastikan token Fonnte sudah tersimpan (dan di-refresh) sebelum melakukan test.</p>
-                            <button type="button" onclick="document.getElementById('modalTestFonnte').classList.remove('hidden')" class="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-md text-xs font-bold transition shadow-sm">
+                            <p class="text-xs text-gray-600 mb-4">Pastikan Bablast API Token dan Sender ID sudah tersimpan (dan di-refresh) sebelum melakukan test.</p>
+                            <button type="button" onclick="document.getElementById('modalTestWhatsapp').classList.remove('hidden')" class="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-md text-xs font-bold transition shadow-sm">
                                 Mulai Test Koneksi
                             </button>
                         </div>
@@ -567,17 +567,17 @@
         </div>
     </div>
 
-    <!-- Modal Test Fonnte -->
-    <div id="modalTestFonnte" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <!-- Modal Test Whatsapp -->
+    <div id="modalTestWhatsapp" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
         <div class="flex items-end justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
-            <div class="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75" aria-hidden="true" onclick="document.getElementById('modalTestFonnte').classList.add('hidden')"></div>
+            <div class="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75" aria-hidden="true" onclick="document.getElementById('modalTestWhatsapp').classList.add('hidden')"></div>
             <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
             <div class="inline-block overflow-hidden text-left align-bottom transition-all transform bg-white rounded-lg shadow-xl sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-                <form action="{{ route('admin.settings.test-fonnte') }}" method="POST">
+                <form action="{{ route('admin.settings.test-whatsapp') }}" method="POST">
                     @csrf
                     <div class="px-4 pt-5 pb-4 bg-white sm:p-6 sm:pb-4">
                         <h3 class="text-lg font-medium leading-6 text-gray-900" id="modal-title">
-                            Test Koneksi Fonnte
+                            Test Koneksi WhatsApp
                         </h3>
                         <div class="mt-2">
                             <p class="text-sm text-gray-500">Masukkan nomor WhatsApp aktif (awali dengan 08 atau 62) untuk mengirimkan pesan test dari sistem.</p>
@@ -591,7 +591,7 @@
                         <button type="submit" class="inline-flex justify-center w-full px-4 py-2 text-base font-medium text-white bg-blue-600 border border-transparent rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm">
                             Kirim Pesan Test
                         </button>
-                        <button type="button" onclick="document.getElementById('modalTestFonnte').classList.add('hidden')" class="inline-flex justify-center w-full px-4 py-2 mt-3 text-base font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                        <button type="button" onclick="document.getElementById('modalTestWhatsapp').classList.add('hidden')" class="inline-flex justify-center w-full px-4 py-2 mt-3 text-base font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
                             Batal
                         </button>
                     </div>

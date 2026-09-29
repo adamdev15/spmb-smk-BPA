@@ -92,7 +92,7 @@
         <tr>
             <td>7. Alamat Tempat Tinggal</td>
             <td>:</td>
-            <td>{{ strtoupper($casis?->alamat_siswa ?? '-') }}</td>
+            <td>{{ strtoupper($casis?->alamat_siswa ?? '-') }}, RT {{ $casis?->rt ?? '-' }}/RW {{ $casis?->rw ?? '-' }}, {{ strtoupper($casis?->kelurahan?->nama_desa_kel ?? '-') }}, {{ strtoupper($casis?->kecamatan?->nama_kec ?? '-') }}, {{ strtoupper($casis?->kabupaten?->nama_kabkota ?? '-') }}, {{ strtoupper($casis?->provinsi?->nama_provinsi ?? '-') }}</td>
         </tr>
         <tr class="gray-bg">
             <td>8. No. WhatsApp Siswa</td>

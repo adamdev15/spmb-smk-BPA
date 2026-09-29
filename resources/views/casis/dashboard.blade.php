@@ -145,64 +145,72 @@
                     </h3>
 
                     <div class="mb-8 grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-0">
-                        <table class="w-full text-sm text-left text-slate-600 h-fit">
+                        <table class="w-full text-sm text-left text-slate-600 h-fit table-fixed">
                             <tbody>
                                 <tr class="border-b border-slate-100">
                                     <th class="py-3 px-2 font-bold text-slate-900 w-1/3 md:w-2/5">Nama Lengkap</th>
-                                    <td class="py-3 px-2">{{ $casis->nama_lengkap }}</td>
+                                    <td class="py-3 px-2 break-words whitespace-normal">{{ $casis->nama_lengkap }}</td>
                                 </tr>
                                 <tr class="border-b border-slate-100">
                                     <th class="py-3 px-2 font-bold text-slate-900">NISN</th>
-                                    <td class="py-3 px-2">{{ $casis->nisn }}</td>
+                                    <td class="py-3 px-2 break-words whitespace-normal">{{ $casis->nisn }}</td>
                                 </tr>
                                 <tr class="border-b border-slate-100">
                                     <th class="py-3 px-2 font-bold text-slate-900">NIK</th>
-                                    <td class="py-3 px-2">{{ $casis->nik ?? '-' }}</td>
+                                    <td class="py-3 px-2 break-words whitespace-normal">{{ $casis->nik ?? '-' }}</td>
                                 </tr>
                                 <tr class="border-b border-slate-100">
-                                    <th class="py-3 px-2 font-bold text-slate-900">Tempat, Tgl Lahir</th>
-                                    <td class="py-3 px-2">{{ $casis->tempat_lahir }}, {{ $casis->tgl_lahir ? \Carbon\Carbon::parse($casis->tgl_lahir)->translatedFormat('d F Y') : '-' }}</td>
+                                    <th class="py-3 px-2 font-bold text-slate-900 align-top">Tempat, Tgl Lahir</th>
+                                    <td class="py-3 px-2 break-words whitespace-normal">{{ $casis->tempat_lahir }}, {{ $casis->tgl_lahir ? \Carbon\Carbon::parse($casis->tgl_lahir)->translatedFormat('d F Y') : '-' }}</td>
                                 </tr>
                                 <tr class="border-b border-slate-100">
                                     <th class="py-3 px-2 font-bold text-slate-900">Jenis Kelamin</th>
-                                    <td class="py-3 px-2">{{ $casis->jk == 'L' ? 'Laki-Laki' : ($casis->jk == 'P' ? 'Perempuan' : $casis->jk) }}</td>
+                                    <td class="py-3 px-2 break-words whitespace-normal">{{ $casis->jk == 'L' ? 'Laki-Laki' : ($casis->jk == 'P' ? 'Perempuan' : $casis->jk) }}</td>
                                 </tr>
                                 <tr class="border-b border-slate-100">
-                                    <th class="py-3 px-2 font-bold text-slate-900">Asal Sekolah</th>
-                                    <td class="py-3 px-2">{{ $casis->nama_sekolah }}</td>
+                                    <th class="py-3 px-2 font-bold text-slate-900 align-top">Asal Sekolah</th>
+                                    <td class="py-3 px-2 break-words whitespace-normal">{{ $casis->nama_sekolah }}</td>
                                 </tr>
                             </tbody>
                         </table>
                         
-                        <table class="w-full text-sm text-left text-slate-600 h-fit">
+                        <table class="w-full text-sm text-left text-slate-600 h-fit table-fixed">
                             <tbody>
                                 <tr class="border-b border-slate-100">
                                     <th class="py-3 px-2 font-bold text-slate-900 w-1/3 md:w-2/5">Nama Ayah</th>
-                                    <td class="py-3 px-2">{{ $casis->nama_ayah ?: '-' }}</td>
+                                    <td class="py-3 px-2 break-words whitespace-normal">{{ $casis->nama_ayah ?: '-' }}</td>
                                 </tr>
                                 <tr class="border-b border-slate-100">
                                     <th class="py-3 px-2 font-bold text-slate-900">Nama Ibu</th>
-                                    <td class="py-3 px-2">{{ $casis->nama_ibu ?: '-' }}</td>
+                                    <td class="py-3 px-2 break-words whitespace-normal">{{ $casis->nama_ibu ?: '-' }}</td>
                                 </tr>
                                 <tr class="border-b border-slate-100">
                                     <th class="py-3 px-2 font-bold text-slate-900">No. HP (WA)</th>
-                                    <td class="py-3 px-2">{{ $casis->no_hp_siswa }}</td>
+                                    <td class="py-3 px-2 break-words whitespace-normal">{{ $casis->no_hp_siswa }}</td>
                                 </tr>
                                 <tr class="border-b border-slate-100">
                                     <th class="py-3 px-2 font-bold text-slate-900">RT / RW</th>
-                                    <td class="py-3 px-2">{{ $casis->rt ?? '-' }} / {{ $casis->rw ?? '-' }}</td>
+                                    <td class="py-3 px-2 break-words whitespace-normal">{{ $casis->rt ?? '-' }} / {{ $casis->rw ?? '-' }}</td>
                                 </tr>
                                 <tr class="border-b border-slate-100">
-                                    <th class="py-3 px-2 font-bold text-slate-900">Kecamatan</th>
-                                    <td class="py-3 px-2">{{ $casis->kecamatan ?? '-' }}</td>
+                                    <th class="py-3 px-2 font-bold text-slate-900 align-top">Provinsi</th>
+                                    <td class="py-3 px-2 break-words whitespace-normal">{{ $casis->provinsi ? $casis->provinsi->nama_provinsi : '-' }}</td>
                                 </tr>
                                 <tr class="border-b border-slate-100">
-                                    <th class="py-3 px-2 font-bold text-slate-900">Kabupaten/Kota</th>
-                                    <td class="py-3 px-2">{{ $casis->kab_kota ?? '-' }}</td>
+                                    <th class="py-3 px-2 font-bold text-slate-900 align-top">Kabupaten/Kota</th>
+                                    <td class="py-3 px-2 break-words whitespace-normal">{{ $casis->kabupaten ? $casis->kabupaten->nama_kabkota : '-' }}</td>
                                 </tr>
                                 <tr class="border-b border-slate-100">
-                                    <th class="py-3 px-2 font-bold text-slate-900">Alamat Lengkap</th>
-                                    <td class="py-3 px-2">{{ $casis->alamat_siswa }}</td>
+                                    <th class="py-3 px-2 font-bold text-slate-900 align-top">Kecamatan</th>
+                                    <td class="py-3 px-2 break-words whitespace-normal">{{ $casis->kecamatan ? $casis->kecamatan->nama_kec : '-' }}</td>
+                                </tr>
+                                <tr class="border-b border-slate-100">
+                                    <th class="py-3 px-2 font-bold text-slate-900 align-top">Kelurahan</th>
+                                    <td class="py-3 px-2 break-words whitespace-normal">{{ $casis->kelurahan ? $casis->kelurahan->nama_desa_kel : '-' }}</td>
+                                </tr>
+                                <tr class="border-b border-slate-100">
+                                    <th class="py-3 px-2 font-bold text-slate-900 align-top">Alamat Lengkap</th>
+                                    <td class="py-3 px-2 break-words whitespace-normal">{{ $casis->alamat_siswa }}</td>
                                 </tr>
                             </tbody>
                         </table>

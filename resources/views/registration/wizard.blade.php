@@ -48,7 +48,7 @@
             
             <div class="flex items-center gap-4">
                 <span class="px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-bold border border-blue-100 hidden sm:inline-block">
-                    {{ $activePeriod ? 'Tahun Ajaran ' . $activePeriod->tahunAjaran->nama . ' - ' . $activePeriod->gelombang : 'Pendaftaran Ditutup' }}
+                    {{ $registrationStatus === 'open' ? 'Tahun Ajaran ' . $activePeriod->tahunAjaran->nama . ' - ' . $activePeriod->gelombang : ($registrationStatus === 'not_started' ? 'Pendaftaran Belum Dibuka' : 'Pendaftaran Ditutup') }}
                 </span>
                 <a href="{{ route('landing') }}" class="text-xs font-bold text-slate-500 hover:text-red-600 transition">
                     Batal
@@ -60,14 +60,33 @@
     <main class="flex-grow py-8 px-4 sm:px-6">
         <div class="max-w-4xl mx-auto">
 
-            @if(!$activePeriod)
-            <div class="bg-red-50 border-l-4 border-red-500 p-8 rounded-2xl text-center shadow-sm mt-10">
-                <div class="w-16 h-16 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+            @if($registrationStatus === 'not_started')
+            <div class="bg-blue-50 border border-blue-200 p-8 rounded-2xl text-center shadow-sm mt-10">
+                <div class="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
                 </div>
-                <h2 class="text-2xl font-extrabold text-red-700 font-heading mb-2">Pendaftaran SPMB Ditutup</h2>
-                <p class="text-red-600 mb-6">Mohon maaf, saat ini belum ada gelombang pendaftaran yang aktif atau periode pendaftaran telah berakhir.</p>
-                <a href="{{ route('landing') }}" class="inline-block bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-8 rounded-xl transition shadow-md">Kembali ke Beranda</a>
+                <h2 class="text-2xl font-extrabold text-blue-700 font-heading mb-2">Pendaftaran SPMB Belum Dibuka</h2>
+                <p class="text-blue-600 mb-6">Pendaftaran Gelombang {{ $activePeriod->gelombang }} akan dibuka pada tanggal {{ \Carbon\Carbon::parse($tglMulai)->translatedFormat('d F Y') }}.</p>
+                
+                <div class="mb-6 bg-blue-600 text-white rounded-xl p-5 shadow-inner border border-blue-500 text-center max-w-sm mx-auto" x-data="countdownTimer('{{ $tglMulai }}')">
+                    <div class="text-[10px] font-semibold mb-1 text-blue-100 uppercase tracking-widest">Hitung Mundur Pembukaan</div>
+                    <div class="text-3xl font-black tracking-widest font-heading drop-shadow-md" x-text="countdownText">00 Hari 00:00:00</div>
+                </div>
+
+                <a href="{{ route('landing') }}" class="inline-block bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-xl transition shadow-md">Kembali ke Beranda</a>
+            </div>
+            @elseif($registrationStatus === 'closed')
+            <div class="bg-blue-50 border border-blue-200 p-8 rounded-2xl text-center shadow-sm mt-10">
+                <div class="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </div>
+                <h2 class="text-2xl font-extrabold text-blue-700 font-heading mb-2">Pendaftaran SPMB Ditutup</h2>
+                <p class="text-blue-600 mb-6">Mohon maaf, saat ini belum ada gelombang pendaftaran yang aktif atau periode pendaftaran telah berakhir.</p>
+                <a href="{{ route('landing') }}" class="inline-block bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-xl transition shadow-md">Kembali ke Beranda</a>
             </div>
             @else
             <!-- Step Progress Indicator -->
@@ -167,12 +186,15 @@
                                 <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
                                     Pilihan Program Keunggulan Industri (Opsional)
                                 </label>
-                                <select x-model="formData.program_keunggulan_id" class="w-full rounded-2xl border-slate-300 py-3 text-sm focus:border-blue-600 focus:ring-blue-100 bg-slate-50">
+                                <select x-model="formData.program_keunggulan_id" class="w-full rounded-2xl border-slate-300 py-3 text-sm focus:border-blue-600 focus:ring-blue-100 bg-slate-50" :disabled="availablePrograms.length === 0">
                                     <option value="">-- Pilih Program Keunggulan --</option>
-                                    @foreach($programs as $p)
-                                    <option value="{{ $p->id }}">{{ $p->nama }}</option>
-                                    @endforeach
+                                    <template x-for="p in availablePrograms" :key="p.id">
+                                        <option :value="p.id" x-text="p.nama"></option>
+                                    </template>
                                 </select>
+                                <p class="mt-2 text-[10px] text-gray-500 italic">
+                                    *Pilih jika berminat mengikuti. Jika tidak, bisa dikosongkan (opsional).
+                                </p>
                             </div>
                         </div>
                     </div>
@@ -209,6 +231,7 @@
                             <div>
                                 <label class="block font-bold text-slate-700 mb-1">No. WhatsApp Siswa <span class="text-red-500">*</span></label>
                                 <input type="text" x-model="formData.no_hp_siswa" required class="w-full rounded-xl border-slate-300 py-2.5 bg-slate-50 focus:bg-white text-sm" placeholder="08123456789">
+                                <p class="text-[10px] text-slate-500 mt-1 italic">Pastikan nomor diisi dengan benar dan aktif karena digunakan untuk menerima notifikasi WhatsApp.</p>
                                 <p x-show="errors.no_hp_siswa" class="text-red-500 text-[10px] mt-1 font-bold" x-text="errors.no_hp_siswa"></p>
                             </div>
 
@@ -276,7 +299,45 @@
                             <div class="md:col-span-2">
                                 <h4 class="block font-bold text-slate-700 mb-3 border-b border-slate-100 pb-2">Alamat Tempat Tinggal <span class="text-red-500">*</span></h4>
                                 
-                                <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                                    <div>
+                                        <label class="block font-semibold text-slate-600 text-[11px] uppercase tracking-wider mb-1.5">Provinsi <span class="text-red-500">*</span></label>
+                                        <select x-model="formData.id_provinsi" required class="w-full rounded-xl border-slate-300 py-2.5 bg-slate-50 focus:bg-white text-sm">
+                                            <option value="">Pilih Provinsi...</option>
+                                            <template x-for="p in provinsiList" :key="p.kode_prov">
+                                                <option :value="p.kode_prov" x-text="p.nama_provinsi"></option>
+                                            </template>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block font-semibold text-slate-600 text-[11px] uppercase tracking-wider mb-1.5">Kabupaten / Kota <span class="text-red-500">*</span></label>
+                                        <select x-model="formData.id_kabupaten" required class="w-full rounded-xl border-slate-300 py-2.5 bg-slate-50 focus:bg-white text-sm" :disabled="kabupatenList.length === 0">
+                                            <option value="">Pilih Kabupaten/Kota...</option>
+                                            <template x-for="k in kabupatenList" :key="k.kode_kabkota">
+                                                <option :value="k.kode_kabkota" x-text="k.nama_kabkota"></option>
+                                            </template>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block font-semibold text-slate-600 text-[11px] uppercase tracking-wider mb-1.5">Kecamatan <span class="text-red-500">*</span></label>
+                                        <select x-model="formData.id_kecamatan" required class="w-full rounded-xl border-slate-300 py-2.5 bg-slate-50 focus:bg-white text-sm" :disabled="kecamatanList.length === 0">
+                                            <option value="">Pilih Kecamatan...</option>
+                                            <template x-for="kc in kecamatanList" :key="kc.kode_kec">
+                                                <option :value="kc.kode_kec" x-text="kc.nama_kec"></option>
+                                            </template>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block font-semibold text-slate-600 text-[11px] uppercase tracking-wider mb-1.5">Kelurahan / Desa <span class="text-red-500">*</span></label>
+                                        <select x-model="formData.id_kelurahan" required class="w-full rounded-xl border-slate-300 py-2.5 bg-slate-50 focus:bg-white text-sm" :disabled="kelurahanList.length === 0">
+                                            <option value="">Pilih Kelurahan/Desa...</option>
+                                            <template x-for="kl in kelurahanList" :key="kl.kode_desa_kel">
+                                                <option :value="kl.kode_desa_kel" x-text="kl.nama_desa_kel"></option>
+                                            </template>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-2 gap-4 mb-4">
                                     <div>
                                         <label class="block font-semibold text-slate-600 text-[11px] uppercase tracking-wider mb-1.5">RT</label>
                                         <input type="text" x-model="formData.rt" required class="w-full rounded-xl border-slate-300 py-2.5 bg-slate-50 focus:bg-white text-sm" placeholder="01">
@@ -285,14 +346,6 @@
                                         <label class="block font-semibold text-slate-600 text-[11px] uppercase tracking-wider mb-1.5">RW</label>
                                         <input type="text" x-model="formData.rw" required class="w-full rounded-xl border-slate-300 py-2.5 bg-slate-50 focus:bg-white text-sm" placeholder="02">
                                     </div>
-                                    <div>
-                                        <label class="block font-semibold text-slate-600 text-[11px] uppercase tracking-wider mb-1.5">Kecamatan</label>
-                                        <input type="text" x-model="formData.kecamatan" required class="w-full rounded-xl border-slate-300 py-2.5 bg-slate-50 focus:bg-white text-sm" placeholder="Contoh: Adiwerna">
-                                    </div>
-                                    <div>
-                                        <label class="block font-semibold text-slate-600 text-[11px] uppercase tracking-wider mb-1.5">Kab / Kota</label>
-                                        <input type="text" x-model="formData.kab_kota" required class="w-full rounded-xl border-slate-300 py-2.5 bg-slate-50 focus:bg-white text-sm" placeholder="Contoh: Kab. Tegal">
-                                    </div>
                                 </div>
                                 
                                 <div>
@@ -300,7 +353,7 @@
                                     <textarea x-model="formData.alamat_siswa" rows="2" required class="w-full rounded-xl border-slate-300 py-2.5 bg-slate-50 focus:bg-white text-sm" placeholder="Contoh: Jl. Anggrek No. 15, Desa Bulakwaru"></textarea>
                                 </div>
 
-                                <p x-show="errors.rt || errors.rw || errors.kecamatan || errors.kab_kota || errors.alamat_siswa" class="text-red-500 text-[10px] mt-1 font-bold">Harap lengkapi seluruh kolom alamat.</p>
+                                <p x-show="errors.rt || errors.rw || errors.id_provinsi || errors.id_kabupaten || errors.id_kecamatan || errors.id_kelurahan || errors.alamat_siswa" class="text-red-500 text-[10px] mt-1 font-bold">Harap lengkapi seluruh kolom alamat.</p>
                             </div>
                         </div>
                     </div>
@@ -314,19 +367,19 @@
                             </h2>
                         </div>
 
-                        <!-- Info Text -->
-                        <div class="mb-5 bg-amber-50 border border-amber-200 p-4 rounded-xl text-amber-800 text-xs leading-relaxed">
-                            <strong>Informasi Pengumpulan Berkas Fisik:</strong><br>
-                            Selain mengunggah dokumen digital di bawah ini, calon siswa diwajibkan untuk menyerahkan berkas fisik (fotokopi) ke Panitia SPMB di SMK Bhakti Praja Adiwerna pada jam kerja.
-                        </div>
+                          <!-- Info Text -->
+                          <div class="mb-5 bg-amber-50 border border-amber-200 p-4 rounded-xl text-amber-800 text-xs leading-relaxed">
+                              <strong>Informasi Pengumpulan Berkas:</strong><br>
+                              Unggah dokumen secara digital di bawah ini sifatnya <strong>opsional</strong> (boleh dilewati jika belum siap). Namun, calon siswa <strong>diwajibkan</strong> menyerahkan berkas fisik (fotokopi) ke Panitia SPMB SMK Bhakti Praja Adiwerna pada jam kerja.
+                          </div>
 
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                             
                             <!-- Pas Foto -->
                             <div class="p-5 bg-white rounded-2xl border border-slate-200 flex flex-col justify-between hover:border-blue-400 transition">
                                 <div>
-                                    <label class="block font-bold text-slate-900 text-sm mb-1">Pas Foto 3x4 Berwarna <span class="text-red-500">* (Wajib)</span></label>
-                                    <p class="text-slate-500 text-xs mb-4 leading-relaxed">Foto berwarna latar belakang merah/biru. Format JPG/PNG max 2MB. Silakan ambil dari kamera atau unggah file.</p>
+                                    <label class="block font-bold text-slate-900 text-sm mb-1">Pas Foto 3x4 Berwarna <span class="text-slate-400 font-normal">(Opsional)</span></label>
+                                    <p class="text-[10px] text-slate-500 mb-3">Format JPG/PNG, maks 2MB.</p>
                                 </div>
                                 <div>
                                     <label class="flex items-center gap-3 cursor-pointer group">
@@ -430,13 +483,71 @@
             return {
                 step: 1,
                 submitting: false,
+                allPrograms: @json($programs),
+                get availablePrograms() {
+                    if (!this.formData.jurusan_id) return [];
+                    return this.allPrograms.filter(p => p.jurusan_id == this.formData.jurusan_id);
+                },
                 berkasFiles: {
                     pas_foto: null,
                     fc_kk: null,
                     fc_akta: null,
                     fc_ijazah: null
                 },
+                provinsiList: [],
+                kabupatenList: [],
+                kecamatanList: [],
+                kelurahanList: [],
+                async fetchProvinsi() {
+                    try {
+                        const res = await fetch('/api/region/provinsi');
+                        this.provinsiList = await res.json();
+                    } catch (e) { console.error('Error fetching provinsi:', e); }
+                },
+                async fetchKabupaten() {
+                    this.kabupatenList = [];
+                    this.kecamatanList = [];
+                    this.kelurahanList = [];
+                    this.formData.id_kabupaten = '';
+                    this.formData.id_kecamatan = '';
+                    this.formData.id_kelurahan = '';
+                    if(!this.formData.id_provinsi) return;
+                    try {
+                        const res = await fetch(`/api/region/kabupaten/${this.formData.id_provinsi}`);
+                        this.kabupatenList = await res.json();
+                    } catch (e) { console.error('Error fetching kabupaten:', e); }
+                },
+                async fetchKecamatan() {
+                    this.kecamatanList = [];
+                    this.kelurahanList = [];
+                    this.formData.id_kecamatan = '';
+                    this.formData.id_kelurahan = '';
+                    if(!this.formData.id_kabupaten) return;
+                    try {
+                        const res = await fetch(`/api/region/kecamatan/${this.formData.id_kabupaten}`);
+                        this.kecamatanList = await res.json();
+                    } catch (e) { console.error('Error fetching kecamatan:', e); }
+                },
+                async fetchKelurahan() {
+                    this.kelurahanList = [];
+                    this.formData.id_kelurahan = '';
+                    if(!this.formData.id_kecamatan) return;
+                    try {
+                        const res = await fetch(`/api/region/kelurahan/${this.formData.id_kecamatan}`);
+                        this.kelurahanList = await res.json();
+                    } catch (e) { console.error('Error fetching kelurahan:', e); }
+                },
                 errors: {},
+                init() {
+                    this.$watch('formData.jurusan_id', (value) => {
+                        this.formData.program_keunggulan_id = '';
+                    });
+                    
+                    this.fetchProvinsi();
+                    this.$watch('formData.id_provinsi', () => this.fetchKabupaten());
+                    this.$watch('formData.id_kabupaten', () => this.fetchKecamatan());
+                    this.$watch('formData.id_kecamatan', () => this.fetchKelurahan());
+                },
                 formData: {
                     agreed: false,
                     jurusan_id: '{{ old("jurusan_id") }}',
@@ -453,8 +564,10 @@
                     nama_ibu: '{{ old("nama_ibu") }}',
                     rt: '{{ old("rt") }}',
                     rw: '{{ old("rw") }}',
-                    kecamatan: '{{ old("kecamatan") }}',
-                    kab_kota: '{{ old("kab_kota") }}',
+                    id_provinsi: '{{ old("id_provinsi") }}',
+                    id_kabupaten: '{{ old("id_kabupaten") }}',
+                    id_kecamatan: '{{ old("id_kecamatan") }}',
+                    id_kelurahan: '{{ old("id_kelurahan") }}',
                     alamat_siswa: '{{ old("alamat_siswa") }}',
                     nama_sekolah: '{{ old("nama_sekolah") }}',
                     alamat_sekolah: '{{ old("alamat_sekolah") }}',
@@ -474,7 +587,7 @@
                     }
                     if (this.step === 3) {
                         // Basic JS validation
-                        if (!this.formData.nama_lengkap || !this.formData.nisn || !this.formData.nik || !this.formData.agama || !this.formData.nama_sekolah || !this.formData.alamat_sekolah || !this.formData.alamat_siswa || !this.formData.rt || !this.formData.rw || !this.formData.kecamatan || !this.formData.kab_kota) {
+                        if (!this.formData.nama_lengkap || !this.formData.nisn || !this.formData.nik || !this.formData.agama || !this.formData.nama_sekolah || !this.formData.alamat_sekolah || !this.formData.alamat_siswa || !this.formData.rt || !this.formData.rw || !this.formData.id_provinsi || !this.formData.id_kabupaten || !this.formData.id_kecamatan || !this.formData.id_kelurahan) {
                             Swal.fire('Perhatian', 'Harap lengkapi semua kolom wajib (*) pada Biodata.', 'warning');
                             return;
                         }
@@ -548,6 +661,40 @@
                         this.submitting = false;
                         Swal.fire('Error', 'Terjadi kesalahan sistem/jaringan.', 'error');
                     });
+                }
+            }
+        }
+
+        function countdownTimer(startDate) {
+            return {
+                countdownText: '00 Hari 00:00:00',
+                countdownInterval: null,
+                init() {
+                    if (startDate) {
+                        const countDownDate = new Date(startDate).getTime();
+                        this.updateCountdown(countDownDate);
+                        this.countdownInterval = setInterval(() => {
+                            this.updateCountdown(countDownDate);
+                        }, 1000);
+                    }
+                },
+                updateCountdown(countDownDate) {
+                    const now = new Date().getTime();
+                    const distance = countDownDate - now;
+
+                    if (distance < 0) {
+                        clearInterval(this.countdownInterval);
+                        window.location.reload(); // Reload page when time is up
+                        return;
+                    }
+
+                    const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+                    const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                    const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                    const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+                    const pad = (n) => n.toString().padStart(2, '0');
+                    this.countdownText = `${pad(days)} Hari ${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
                 }
             }
         }

@@ -51,8 +51,8 @@
                                     <div class="text-xs text-gray-500 truncate max-w-xs mt-1" title="{{ $j->deskripsi }}">{{ $j->deskripsi ?: '-' }}</div>
                                 </td>
                                 <td class="px-6 py-6">
-                                    <div class="text-xs font-bold text-gray-700 mb-1">Kuota: <span class="text-blue-600">{{ $j->kuota }}</span></div>
-                                    <div class="text-xs font-bold text-gray-500">Daftar Ulang: Rp {{ number_format($j->biaya_daftar_ulang, 0, ',', '.') }}</div>
+                                    <div class="text-xs font-bold text-gray-700 mb-1">Total Kuota: <span class="text-blue-600">{{ $j->kuota }}</span></div>
+                                    <div class="text-xs font-bold text-gray-700">Total Kuota Tersisa: <span class="{{ $j->sisa_kuota > 0 ? 'text-emerald-600' : 'text-red-600' }}">{{ $j->sisa_kuota }}</span></div>
                                 </td>
                                 <td class="px-6 py-6 text-center">
                                     <span class="px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest {{ $j->status_aktif ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-red-50 text-red-600 border border-red-100' }}">

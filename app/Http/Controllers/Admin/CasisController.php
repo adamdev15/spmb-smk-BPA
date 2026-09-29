@@ -110,7 +110,7 @@ class CasisController extends Controller
         $validated = $request->validate([
             'nama_lengkap' => 'required|string|max:255',
             'nisn' => 'required|string|unique:casis,nisn',
-            'nik' => 'nullable|string',
+            'nik' => 'nullable|string|size:16|unique:casis,nik',
             'no_kk' => 'nullable|string',
             'jk' => 'required|in:L,P',
             'tempat_lahir' => 'nullable|string',
@@ -122,8 +122,10 @@ class CasisController extends Controller
             'nama_ibu' => 'nullable|string|max:255',
             'rt' => 'nullable|string',
             'rw' => 'nullable|string',
-            'kecamatan' => 'nullable|string',
-            'kab_kota' => 'nullable|string',
+            'id_provinsi' => 'nullable|string',
+            'id_kabupaten' => 'nullable|string',
+            'id_kecamatan' => 'nullable|string',
+            'id_kelurahan' => 'nullable|string',
             'nama_sekolah' => 'nullable|string',
             'alamat_sekolah' => 'nullable|string',
             'jurusan_id' => 'required|exists:master_jurusan,id',
@@ -135,6 +137,9 @@ class CasisController extends Controller
             'fc_kk' => 'nullable|mimes:jpeg,png,jpg,pdf|max:2048',
             'fc_akta' => 'nullable|mimes:jpeg,png,jpg,pdf|max:2048',
             'fc_ijazah' => 'nullable|mimes:jpeg,png,jpg,pdf|max:2048',
+        ], [
+            'nik.unique' => 'NIK anda telah terdaftar, hubungi admin',
+            'nisn.unique' => 'NISN anda telah terdaftar, hubungi admin'
         ]);
 
         $year = date('Y');
@@ -221,8 +226,8 @@ class CasisController extends Controller
     {
         $validated = $request->validate([
             'nama_lengkap' => 'required|string|max:255',
-            'nisn' => 'required|string|unique:casis,nisn,' . $casis->id,
-            'nik' => 'nullable|string',
+            'nisn' => 'required|string',
+'nik' =>    'nullable|string|size:16',
             'no_kk' => 'nullable|string',
             'jk' => 'required|in:L,P',
             'tempat_lahir' => 'nullable|string',
@@ -234,8 +239,10 @@ class CasisController extends Controller
             'nama_ibu' => 'nullable|string|max:255',
             'rt' => 'nullable|string',
             'rw' => 'nullable|string',
-            'kecamatan' => 'nullable|string',
-            'kab_kota' => 'nullable|string',
+            'id_provinsi' => 'nullable|string',
+            'id_kabupaten' => 'nullable|string',
+            'id_kecamatan' => 'nullable|string',
+            'id_kelurahan' => 'nullable|string',
             'nama_sekolah' => 'nullable|string',
             'alamat_sekolah' => 'nullable|string',
             'jurusan_id' => 'required|exists:master_jurusan,id',
@@ -378,9 +385,46 @@ class CasisController extends Controller
         }
     }
 
+    public function updateKelulusan(Request $request, $id)
+    {
+        $casis = Casis::findOrFail($id);
+        
+        $request->validate([
+            'status_kelulusan' => 'required|in:Proses,Lulus,Tidak Lulus,Cadangan'
+        ]);
+
+        $casis->update([
+            'status_kelulusan' => $request->status_kelulusan
+        ]);
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Status kelulusan berhasil diperbarui.'
+            ]);
+        }
+
+        return redirect()->back()->with('success', 'Status kelulusan berhasil diperbarui.');
+    }
+
+    public function bulkUpdateKelulusan(Request $request)
+    {
+        $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'exists:casis,id',
+            'status_kelulusan' => 'required|in:Proses,Lulus,Tidak Lulus,Cadangan'
+        ]);
+
+        Casis::whereIn('id', $request->ids)->update([
+            'status_kelulusan' => $request->status_kelulusan
+        ]);
+
+        return redirect()->route('admin.casis.index')->with('success', 'Status kelulusan berhasil diperbarui untuk ' . count($request->ids) . ' siswa.');
+    }
+
     public function export(Request $request)
     {
-        $query = Casis::with(['jurusan', 'programKeunggulan']);
+        $query = Casis::with(['jurusan', 'programKeunggulan', 'provinsi', 'kabupaten', 'kecamatan', 'kelurahan']);
 
         if ($request->filled('search')) {
             $search = $request->search;
@@ -416,7 +460,7 @@ class CasisController extends Controller
             
             $columns = [
                 'No', 'No. Pendaftaran', 'Nama Lengkap', 'NISN', 'NIK', 'Jenis Kelamin', 
-                'Tempat Lahir', 'Tanggal Lahir', 'Agama', 'Alamat', 'RT', 'RW', 'Kecamatan', 'Kab/Kota', 'No HP', 
+                'Tempat Lahir', 'Tanggal Lahir', 'Agama', 'Alamat', 'RT', 'RW', 'Kelurahan', 'Kecamatan', 'Kab/Kota', 'Provinsi', 'No HP', 
                 'Asal Sekolah', 'Alamat Sekolah', 'Jurusan', 'Program Keunggulan', 
                 'Nama Ayah', 'Nama Ibu',
                 'Status Verifikasi', 'Status Kelulusan', 'Daftar Ulang', 'Tgl Daftar Ulang', 'Tanggal Daftar'
@@ -443,8 +487,10 @@ class CasisController extends Controller
                 echo "<td style='border: 1px solid #000;'>" . ($item->alamat_siswa ?? '-') . "</td>";
                 echo "<td style='border: 1px solid #000;'>" . ($item->rt ?? '-') . "</td>";
                 echo "<td style='border: 1px solid #000;'>" . ($item->rw ?? '-') . "</td>";
-                echo "<td style='border: 1px solid #000;'>" . ($item->kecamatan ?? '-') . "</td>";
-                echo "<td style='border: 1px solid #000;'>" . ($item->kab_kota ?? '-') . "</td>";
+                echo "<td style='border: 1px solid #000;'>" . ($item->kelurahan?->nama_desa_kel ?? '-') . "</td>";
+                echo "<td style='border: 1px solid #000;'>" . ($item->kecamatan?->nama_kec ?? '-') . "</td>";
+                echo "<td style='border: 1px solid #000;'>" . ($item->kabupaten?->nama_kabkota ?? '-') . "</td>";
+                echo "<td style='border: 1px solid #000;'>" . ($item->provinsi?->nama_provinsi ?? '-') . "</td>";
                 echo "<td style='border: 1px solid #000; mso-number-format:\"\\@\";'>" . ($item->no_hp_siswa ?? '-') . "</td>";
                 echo "<td style='border: 1px solid #000;'>" . ($item->nama_sekolah ?? '-') . "</td>";
                 echo "<td style='border: 1px solid #000;'>" . ($item->alamat_sekolah ?? '-') . "</td>";
@@ -468,7 +514,7 @@ class CasisController extends Controller
 
     public function printKartu($id)
     {
-        $casis = Casis::with(['jurusan', 'spmbPeriod.tahunAjaran'])->findOrFail($id);
+        $casis = Casis::with(['jurusan', 'spmbPeriod.tahunAjaran', 'provinsi', 'kabupaten', 'kecamatan', 'kelurahan'])->findOrFail($id);
         $settings = \App\Models\Setting::all()->pluck('value', 'key');
         $tahun_ajaran = $casis->spmbPeriod ? $casis->spmbPeriod->tahunAjaran->nama : '2026/2027';
 
@@ -479,7 +525,7 @@ class CasisController extends Controller
 
     public function printFormulir($id)
     {
-        $casis = Casis::with(['jurusan', 'spmbPeriod.tahunAjaran'])->findOrFail($id);
+        $casis = Casis::with(['jurusan', 'spmbPeriod.tahunAjaran', 'provinsi', 'kabupaten', 'kecamatan', 'kelurahan'])->findOrFail($id);
         $settings = \App\Models\Setting::all()->pluck('value', 'key');
         $tahun_ajaran = $casis->spmbPeriod ? $casis->spmbPeriod->tahunAjaran->nama : '2026/2027';
 
@@ -489,7 +535,7 @@ class CasisController extends Controller
 
     public function printPengumuman($id)
     {
-        $casis = Casis::with(['jurusan', 'spmbPeriod.tahunAjaran'])->findOrFail($id);
+        $casis = Casis::with(['jurusan', 'spmbPeriod.tahunAjaran', 'provinsi', 'kabupaten', 'kecamatan', 'kelurahan'])->findOrFail($id);
         $settings = \App\Models\Setting::all()->pluck('value', 'key');
         $tahun_ajaran = $casis->spmbPeriod ? $casis->spmbPeriod->tahunAjaran->nama : '2026/2027';
         $tahun_masuk = explode('/', $tahun_ajaran)[0] ?? '2026';

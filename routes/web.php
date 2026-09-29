@@ -12,6 +12,7 @@ use App\Http\Controllers\Admin\PembayaranController;
 use App\Http\Controllers\Admin\MasterJurusanController;
 use App\Http\Controllers\Admin\ProgramKeunggulanController;
 use App\Http\Controllers\Admin\JadwalController;
+use App\Http\Controllers\WhatsAppWebhookController;
 use Illuminate\Support\Facades\Auth;
 
 /*
@@ -24,12 +25,26 @@ use Illuminate\Support\Facades\Auth;
 Route::get('/', [LandingController::class, 'index'])->name('landing');
 Route::get('/preview-hasil-pengumuman', [LandingController::class, 'previewHasilPengumuman'])->name('preview.hasil.pengumuman');
 
+// Region API Routes
+Route::prefix('api/region')->group(function () {
+    Route::get('/provinsi', [\App\Http\Controllers\Api\RegionController::class, 'getProvinsi'])->name('api.region.provinsi');
+    Route::get('/kabupaten/{id_provinsi}', [\App\Http\Controllers\Api\RegionController::class, 'getKabupaten'])->name('api.region.kabupaten')->where('id_provinsi', '.*');
+    Route::get('/kecamatan/{id_kabupaten}', [\App\Http\Controllers\Api\RegionController::class, 'getKecamatan'])->name('api.region.kecamatan')->where('id_kabupaten', '.*');
+    Route::get('/kelurahan/{id_kecamatan}', [\App\Http\Controllers\Api\RegionController::class, 'getKelurahan'])->name('api.region.kelurahan')->where('id_kecamatan', '.*');
+});
+
 // Student Online Registration
 Route::get('/pendaftaran', [RegistrationController::class, 'index'])->name('pendaftaran');
 Route::post('/pendaftaran', [RegistrationController::class, 'store'])->name('pendaftaran.store');
 
 // Midtrans Webhook Payment Notification
 Route::post('/payment/notification', [PaymentController::class, 'notification'])->name('payment.notification');
+
+// WhatsApp (Meta WABA) Webhook — harus exclude CSRF
+// GET: verifikasi dari Meta saat setup webhook
+Route::get('/webhook/whatsapp', [WhatsAppWebhookController::class, 'verify'])->name('webhook.whatsapp.verify');
+// POST: event masuk dari Meta (status pesan, pesan masuk)
+Route::post('/webhook/whatsapp', [WhatsAppWebhookController::class, 'handle'])->name('webhook.whatsapp.handle');
 
 // Student Login & Dashboard Routes
 Route::get('/login-siswa', [\App\Http\Controllers\CasisLoginController::class, 'showLoginForm'])->name('casis.login');
@@ -62,6 +77,7 @@ Route::middleware('auth')->group(function () {
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::middleware(['role:admin,petugas'])->group(function () {
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+        Route::get('/dashboard/chart-data', [DashboardController::class, 'chartData'])->name('admin.dashboard.chartData');
         Route::post('/admin/notifications/read-all', function () {
             Auth::user()->unreadNotifications->markAsRead();
             return back()->with('success', 'Semua notifikasi telah ditandai dibaca.');
@@ -100,13 +116,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::resource('admin/users', \App\Http\Controllers\Admin\UserController::class)->names('admin.users');
             Route::get('/admin/settings', [SettingController::class , 'index'])->name('admin.settings');
             Route::post('/admin/settings', [SettingController::class , 'update'])->name('admin.settings.update');
-            Route::post('/admin/settings/test-fonnte', [SettingController::class , 'testFonnte'])->name('admin.settings.test-fonnte');
+            Route::post('/admin/settings/test-whatsapp', [SettingController::class , 'testWhatsapp'])->name('admin.settings.test-whatsapp');
 
             Route::get('/admin/nilai', [\App\Http\Controllers\Admin\NilaiController::class , 'index'])->name('admin.nilai.index');
             Route::get('/admin/nilai/download', [\App\Http\Controllers\Admin\NilaiController::class , 'download'])->name('admin.nilai.download');
             
             // Selection & Re-enrollment Status Updates
             Route::post('/admin/casis/{id}/selection', [CasisController::class, 'updateSelection'])->name('admin.casis.selection');
+            Route::post('/admin/casis/{id}/update-kelulusan', [CasisController::class, 'updateKelulusan'])->name('admin.casis.updateKelulusan');
+            Route::post('/admin/casis/bulk-update-kelulusan', [CasisController::class, 'bulkUpdateKelulusan'])->name('admin.casis.bulkUpdateKelulusan');
             Route::post('/admin/casis/{id}/daftar-ulang', [CasisController::class, 'updateDaftarUlang'])->name('admin.casis.daftar-ulang');
 
             // Admin PDF Print Routes

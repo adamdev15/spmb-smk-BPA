@@ -78,13 +78,22 @@
                         </select>
                     </div>
 
-                    <div class="mb-4 flex items-center justify-between">
+                    <div class="mb-4 flex flex-wrap items-center gap-3">
                         <button type="button" onclick="submitBulkVerify()" id="btnBulkVerify" class="flex opacity-50 cursor-not-allowed bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-black capitalize tracking-widest px-6 py-3 rounded-2xl transition-all shadow-sm items-center gap-2">
                             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                             </svg>
                             Verifikasi Terpilih(<span id="bulkCount">0</span>)
                         </button>
+                        
+                        <div class="flex items-center gap-2">
+                            <button type="button" onclick="submitBulkKelulusan()" id="btnBulkKelulusan" class="flex bg- border-blue-200 border text-blue-700 hover:bg-blue-50 text-[10px] font-black capitalize tracking-widest px-6 py-3 rounded-2xl transition-all shadow-sm items-center gap-2">
+                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                Verifikasi Kelulusan
+                            </button>
+                        </div>
                     </div>
                
                 </form>
@@ -122,7 +131,7 @@
                                     <div class="flex items-center gap-4">
                                         <div class="flex flex-col">
                                             <span
-                                                class="font-bold text-gray-900 uppercase tracking-tight group-hover:text-blue-600 transition-colors">{{
+                                                class="nama-siswa font-bold text-gray-900 uppercase tracking-tight group-hover:text-blue-600 transition-colors">{{
                                                 $item->nama_lengkap }}</span>
                                             <div class="flex items-center gap-2 mt-0.5">
                                                 <span class="text-[10px] text-gray-400 font-mono tracking-wider">NISN:
@@ -232,25 +241,95 @@
         <div id="bulkVerifyInputs"></div>
     </form>
 
+    <form id="bulkKelulusanForm" action="{{ route('admin.casis.bulkUpdateKelulusan') }}" method="POST" class="hidden">
+        @csrf
+        <input type="hidden" name="status_kelulusan" id="bulkKelulusanStatusInput">
+        <div id="bulkKelulusanInputs"></div>
+    </form>
+
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
         function toggleSelectAll(source) {
             const checkboxes = document.querySelectorAll('.casis-checkbox');
             checkboxes.forEach(cb => cb.checked = source.checked);
-            updateBulkVerifyButton();
+            updateBulkButtons();
         }
         
-        function updateBulkVerifyButton() {
+        function updateBulkButtons() {
             const checkedCount = document.querySelectorAll('.casis-checkbox:checked').length;
-            const btn = document.getElementById('btnBulkVerify');
+            const btnVerify = document.getElementById('btnBulkVerify');
+            const btnKelulusan = document.getElementById('btnBulkKelulusan');
             const countSpan = document.getElementById('bulkCount');
             
             countSpan.innerText = checkedCount;
             if(checkedCount > 0) {
-                btn.classList.remove('opacity-50', 'cursor-not-allowed');
+                btnVerify.classList.remove('opacity-50', 'cursor-not-allowed');
+                btnKelulusan.classList.remove('opacity-50', 'cursor-not-allowed');
             } else {
-                btn.classList.add('opacity-50', 'cursor-not-allowed');
+                btnVerify.classList.add('opacity-50', 'cursor-not-allowed');
+                btnKelulusan.classList.add('opacity-50', 'cursor-not-allowed');
             }
+        }
+
+        function submitBulkKelulusan() {
+            const checkboxes = document.querySelectorAll('.casis-checkbox:checked');
+            if(checkboxes.length === 0) return;
+
+            let namesHtml = '<div class="text-left max-h-40 overflow-y-auto mb-4 border border-gray-200 p-3 rounded-xl bg-gray-50"><ol class="list-decimal list-inside text-sm font-bold text-gray-700 space-y-1">';
+            checkboxes.forEach(cb => {
+                const name = cb.closest('tr').querySelector('.nama-siswa').innerText;
+                namesHtml += `<li>${name}</li>`;
+            });
+            namesHtml += '</ol></div>';
+
+            const selectHtml = `
+                <div class="text-left mt-2">
+                    <label class="block text-xs font-black uppercase tracking-widest text-gray-500 mb-2">Pilih Status Kelulusan</label>
+                    <select id="swalBulkKelulusanStatus" class="w-full rounded-xl border-slate-300 py-3 text-sm focus:border-blue-600 focus:ring-blue-100 bg-slate-50 cursor-pointer">
+                        <option value="">-- Pilih Status --</option>
+                        <option value="Proses">Proses</option>
+                        <option value="Lulus">Lulus</option>
+                        <option value="Tidak Lulus">Tidak Lulus</option>
+                        <option value="Cadangan">Cadangan</option>
+                    </select>
+                </div>
+            `;
+            
+            Swal.fire({
+                title: 'Verifikasi Kelulusan',
+                html: namesHtml + selectHtml,
+                icon: 'info',
+                showCancelButton: true,
+                confirmButtonColor: '#2491CA',
+                cancelButtonColor: '#6b7280',
+                confirmButtonText: 'Submit Kelulusan',
+                cancelButtonText: 'Batal',
+                preConfirm: () => {
+                    const status = document.getElementById('swalBulkKelulusanStatus').value;
+                    if (!status) {
+                        Swal.showValidationMessage('Status kelulusan harus dipilih');
+                    }
+                    return status;
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    const status = result.value;
+                    const form = document.getElementById('bulkKelulusanForm');
+                    const inputsContainer = document.getElementById('bulkKelulusanInputs');
+                    document.getElementById('bulkKelulusanStatusInput').value = status;
+                    inputsContainer.innerHTML = '';
+                    
+                    checkboxes.forEach(cb => {
+                        const input = document.createElement('input');
+                        input.type = 'hidden';
+                        input.name = 'ids[]';
+                        input.value = cb.value;
+                        inputsContainer.appendChild(input);
+                    });
+                    
+                    form.submit();
+                }
+            });
         }
 
         function submitBulkVerify() {
@@ -262,7 +341,7 @@
                 text: 'Apakah Anda yakin ingin memverifikasi ' + checkboxes.length + ' siswa yang dipilih?',
                 icon: 'question',
                 showCancelButton: true,
-                confirmButtonColor: '#2563eb',
+                confirmButtonColor: '#2491CA',
                 cancelButtonColor: '#6b7280',
                 confirmButtonText: 'Ya, Verifikasi!',
                 cancelButtonText: 'Batal'
@@ -288,7 +367,7 @@
         document.addEventListener('DOMContentLoaded', function() {
             const checkboxes = document.querySelectorAll('.casis-checkbox');
             checkboxes.forEach(cb => {
-                cb.addEventListener('change', updateBulkVerifyButton);
+                cb.addEventListener('change', updateBulkButtons);
             });
         });
     </script>

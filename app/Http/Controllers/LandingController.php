@@ -17,16 +17,22 @@ class LandingController extends Controller
         $programs = ProgramKeunggulan::where('status_aktif', true)->get();
 
         $activePeriod = SpmbPeriod::with('tahunAjaran')
-            ->where('tanggal_mulai', '<=', now())
-            ->where('tanggal_selesai', '>=', now())
             ->where('status', 'aktif')
+            ->orderBy('tanggal_mulai', 'asc')
             ->first();
 
         // Registration status
         if ($activePeriod) {
-            $registrationStatus = 'open';
-            $tanggalMulai = Carbon::parse($activePeriod->tanggal_mulai);
-            $tanggalSelesai = Carbon::parse($activePeriod->tanggal_selesai);
+            $tanggalMulai = Carbon::parse($activePeriod->tanggal_mulai)->startOfDay();
+            $tanggalSelesai = Carbon::parse($activePeriod->tanggal_selesai)->endOfDay();
+            
+            if (now()->lt($tanggalMulai)) {
+                $registrationStatus = 'not_started';
+            } elseif (now()->gt($tanggalSelesai)) {
+                $registrationStatus = 'closed';
+            } else {
+                $registrationStatus = 'open';
+            }
         } else {
             $registrationStatus = 'closed';
             $tanggalMulai = null;

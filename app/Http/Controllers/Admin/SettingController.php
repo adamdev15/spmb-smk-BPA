@@ -48,9 +48,9 @@ class SettingController extends Controller
                 return str_starts_with($setting->key, 'alur_daftar_ulang_');
             }),
             'WhatsApp' => $settings->filter(function($setting) {
-                return in_array($setting->key, ['fonnte_status', 'fonnte_token', 'template_pesan_pendaftaran', 'template_pesan', 'wa_pesan_ingatkan', 'wa_pesan_daftar_ulang', 'wa_pesan_kelulusan', 'wa_pesan_tagihan_daftar_ulang', 'wa_pesan_pembayaran_sukses']);
+                return in_array($setting->key, ['wa_status', 'bablast_api_token', 'bablast_sender_id', 'template_pesan_pendaftaran', 'template_pesan', 'wa_pesan_ingatkan', 'wa_pesan_daftar_ulang', 'wa_pesan_kelulusan', 'wa_pesan_tagihan_daftar_ulang', 'wa_pesan_pembayaran_sukses']);
             })->sortBy(function($setting) {
-                $order = ['fonnte_token' => 1, 'fonnte_status' => 2, 'template_pesan_pendaftaran' => 3, 'wa_pesan_ingatkan' => 4, 'wa_pesan_daftar_ulang' => 5, 'wa_pesan_kelulusan' => 6, 'wa_pesan_tagihan_daftar_ulang' => 7, 'wa_pesan_pembayaran_sukses' => 8, 'template_pesan' => 9];
+                $order = ['bablast_api_token' => 1, 'bablast_sender_id' => 2, 'wa_status' => 3, 'template_pesan_pendaftaran' => 4, 'wa_pesan_ingatkan' => 5, 'wa_pesan_daftar_ulang' => 6, 'wa_pesan_kelulusan' => 7, 'wa_pesan_tagihan_daftar_ulang' => 8, 'wa_pesan_pembayaran_sukses' => 9, 'template_pesan' => 10];
                 return $order[$setting->key] ?? 99;
             }),
             'Midtrans' => $settings->filter(function($setting) {
@@ -60,7 +60,7 @@ class SettingController extends Controller
                 return in_array($setting->key, ['pengumuman_ttd_kepsek', 'pengumuman_ttd_ketua', 'kwitansi_ttd_panitia', 'kwitansi_stempel_panitia']);
             }),
             'Lainnya' => $settings->filter(function($setting) {
-                return !in_array($setting->key, ['logo', 'nama_sekolah', 'tagline_sekolah', 'landing_hero', 'deskripsi_hero', 'tahun_ajaran', 'brosur', 'fonnte_status', 'fonnte_token', 'template_pesan_pendaftaran', 'template_pesan', 'wa_pesan_ingatkan', 'wa_pesan_daftar_ulang', 'wa_pesan_kelulusan', 'wa_pesan_tagihan_daftar_ulang', 'wa_pesan_pembayaran_sukses', 'pengumuman_ttd_kepsek', 'pengumuman_ttd_ketua', 'kwitansi_ttd_panitia', 'kwitansi_stempel_panitia', 'pengumuman_tgl_mpls', 'pengumuman_tgl_masuk', 'singkatan_sekolah', 'alamat_sekolah', 'telepon_sekolah', 'email_sekolah', 'pengumuman_nama_kepsek', 'pengumuman_nip_kepsek']) 
+                return !in_array($setting->key, ['logo', 'nama_sekolah', 'tagline_sekolah', 'landing_hero', 'deskripsi_hero', 'tahun_ajaran', 'brosur', 'wa_status', 'bablast_api_token', 'bablast_sender_id', 'template_pesan_pendaftaran', 'template_pesan', 'wa_pesan_ingatkan', 'wa_pesan_daftar_ulang', 'wa_pesan_kelulusan', 'wa_pesan_tagihan_daftar_ulang', 'wa_pesan_pembayaran_sukses', 'pengumuman_ttd_kepsek', 'pengumuman_ttd_ketua', 'kwitansi_ttd_panitia', 'kwitansi_stempel_panitia', 'pengumuman_tgl_mpls', 'pengumuman_tgl_masuk', 'singkatan_sekolah', 'alamat_sekolah', 'telepon_sekolah', 'email_sekolah', 'pengumuman_nama_kepsek', 'pengumuman_nip_kepsek']) 
                     && !str_starts_with($setting->key, 'jadwal_') 
                     && !str_starts_with($setting->key, 'kontak_')
                     && !str_starts_with($setting->key, 'alur_')
@@ -153,20 +153,20 @@ class SettingController extends Controller
         return back()->with('success', 'Pengaturan berhasil disimpan.');
     }
 
-    public function testFonnte(Request $request)
+    public function testWhatsapp(Request $request)
     {
         $request->validate([
             'test_nomor' => 'required|string'
         ]);
 
-        $message = "Ini adalah pesan percobaan dari sistem SPMB SMK Bhakti Praja Adiwerna.\nJika Anda menerima pesan ini, koneksi API Fonnte telah berhasil.";
+        $message = "Ini adalah pesan percobaan dari sistem SPMB SMK Bhakti Praja Adiwerna.\nJika Anda menerima pesan ini, koneksi WhatsApp API (Bablast WABA) telah berhasil.";
         
         $success = \App\Services\WhatsAppService::sendMessage($request->test_nomor, $message);
 
         if ($success) {
             return back()->with('success', 'Pesan percobaan berhasil dikirim ke ' . $request->test_nomor);
         } else {
-            return back()->with('error', 'Gagal mengirim pesan percobaan. Pastikan token Fonnte aktif dan kuota mencukupi.');
+            return back()->with('error', 'Gagal mengirim pesan percobaan. Pastikan Bablast API Token dan Sender ID sudah benar dan aktif.');
         }
     }
 }

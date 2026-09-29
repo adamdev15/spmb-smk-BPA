@@ -58,7 +58,7 @@
                             <label class="block font-bold text-slate-700 uppercase tracking-wider mb-2">
                                 Program Keahlian (Jurusan) <span class="text-red-500">*</span>
                             </label>
-                            <select name="jurusan_id" class="w-full rounded-2xl border-slate-300 py-3 text-sm focus:border-blue-600 focus:ring-blue-100 bg-slate-50" required>
+                            <select name="jurusan_id" id="jurusan_id" class="w-full rounded-2xl border-slate-300 py-3 text-sm focus:border-blue-600 focus:ring-blue-100 bg-slate-50" required>
                                 <option value="">-- Pilih Jurusan --</option>
                                 @foreach($jurusans as $j)
                                 <option value="{{ $j->id }}" {{ old('jurusan_id', $casis->jurusan_id ?? '') == $j->id ? 'selected' : '' }}>
@@ -72,14 +72,17 @@
                             <label class="block font-bold text-slate-700 uppercase tracking-wider mb-2">
                                 Program Keunggulan Industri
                             </label>
-                            <select name="program_keunggulan_id" class="w-full rounded-2xl border-slate-300 py-3 text-sm focus:border-blue-600 focus:ring-blue-100 bg-slate-50">
+                            <select name="program_keunggulan_id" id="program_keunggulan_id" class="w-full rounded-2xl border-slate-300 py-3 text-sm focus:border-blue-600 focus:ring-blue-100 bg-slate-50">
                                 <option value="">-- Pilih Program Keunggulan --</option>
                                 @foreach($programs as $p)
-                                <option value="{{ $p->id }}" {{ old('program_keunggulan_id', $casis->program_keunggulan_id ?? '') == $p->id ? 'selected' : '' }}>
+                                <option value="{{ $p->id }}" data-jurusan-id="{{ $p->jurusan_id }}" {{ old('program_keunggulan_id', $casis->program_keunggulan_id ?? '') == $p->id ? 'selected' : '' }}>
                                     {{ $p->nama }}
                                 </option>
                                 @endforeach
                             </select>
+                            <p class="mt-2 text-[10px] text-gray-500 italic">
+                                *Pilih jika berminat. Jika tidak, bisa dikosongkan (opsional).
+                            </p>
                         </div>
 
                         <div>
@@ -97,6 +100,7 @@
                                 No. HP WhatsApp Siswa <span class="text-red-500">*</span>
                             </label>
                             <input type="text" name="no_hp_siswa" value="{{ old('no_hp_siswa', $casis->no_hp_siswa ?? '') }}" class="w-full rounded-2xl border-slate-300 py-3 text-sm focus:border-blue-600 focus:ring-blue-100 bg-slate-50" placeholder="08xxxxxxxxxx" required>
+                            <p class="text-[10px] text-slate-500 mt-1 italic">Pastikan nomor diisi dengan benar dan aktif karena digunakan untuk menerima notifikasi WhatsApp.</p>
                         </div>
                     </div>
                 </div>
@@ -156,9 +160,44 @@
                             </select>
                         </div>
 
+                        <div class="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block font-bold text-slate-700 uppercase tracking-wider mb-2">RT</label>
+                                <input type="text" name="rt" value="{{ old('rt', $casis->rt ?? '') }}" class="w-full rounded-2xl border-slate-300 py-3 text-sm focus:border-blue-600 focus:ring-blue-100 bg-slate-50">
+                            </div>
+                            <div>
+                                <label class="block font-bold text-slate-700 uppercase tracking-wider mb-2">RW</label>
+                                <input type="text" name="rw" value="{{ old('rw', $casis->rw ?? '') }}" class="w-full rounded-2xl border-slate-300 py-3 text-sm focus:border-blue-600 focus:ring-blue-100 bg-slate-50">
+                            </div>
+                            <div>
+                                <label class="block font-bold text-slate-700 uppercase tracking-wider mb-2">Provinsi</label>
+                                <select name="id_provinsi" id="admin_id_provinsi" class="w-full rounded-2xl border-slate-300 py-3 text-sm focus:border-blue-600 focus:ring-blue-100 bg-slate-50" data-selected="{{ old('id_provinsi', $casis->id_provinsi ?? '') }}">
+                                    <option value="">Pilih Provinsi</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block font-bold text-slate-700 uppercase tracking-wider mb-2">Kabupaten/Kota</label>
+                                <select name="id_kabupaten" id="admin_id_kabupaten" class="w-full rounded-2xl border-slate-300 py-3 text-sm focus:border-blue-600 focus:ring-blue-100 bg-slate-50" data-selected="{{ old('id_kabupaten', $casis->id_kabupaten ?? '') }}" disabled>
+                                    <option value="">Pilih Kabupaten/Kota</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block font-bold text-slate-700 uppercase tracking-wider mb-2">Kecamatan</label>
+                                <select name="id_kecamatan" id="admin_id_kecamatan" class="w-full rounded-2xl border-slate-300 py-3 text-sm focus:border-blue-600 focus:ring-blue-100 bg-slate-50" data-selected="{{ old('id_kecamatan', $casis->id_kecamatan ?? '') }}" disabled>
+                                    <option value="">Pilih Kecamatan</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block font-bold text-slate-700 uppercase tracking-wider mb-2">Kelurahan/Desa</label>
+                                <select name="id_kelurahan" id="admin_id_kelurahan" class="w-full rounded-2xl border-slate-300 py-3 text-sm focus:border-blue-600 focus:ring-blue-100 bg-slate-50" data-selected="{{ old('id_kelurahan', $casis->id_kelurahan ?? '') }}" disabled>
+                                    <option value="">Pilih Kelurahan/Desa</option>
+                                </select>
+                            </div>
+                        </div>
+
                         <div class="md:col-span-2">
-                            <label class="block font-bold text-slate-700 uppercase tracking-wider mb-2">Alamat Lengkap Siswa</label>
-                            <input type="text" name="alamat_siswa" value="{{ old('alamat_siswa', $casis->alamat_siswa ?? '') }}" class="w-full rounded-2xl border-slate-300 py-3 text-sm focus:border-blue-600 focus:ring-blue-100 bg-slate-50" placeholder="Jalan, RT/RW, Desa, Kecamatan, Kabupaten">
+                            <label class="block font-bold text-slate-700 uppercase tracking-wider mb-2">Alamat Lengkap (Jalan/Blok)</label>
+                            <input type="text" name="alamat_siswa" value="{{ old('alamat_siswa', $casis->alamat_siswa ?? '') }}" class="w-full rounded-2xl border-slate-300 py-3 text-sm focus:border-blue-600 focus:ring-blue-100 bg-slate-50" placeholder="Jl. Merdeka No. 10">
                         </div>
                     </div>
                 </div>
@@ -258,4 +297,127 @@
             });
         });
     </script>
+
+    @push('scripts')
+    <script>
+        (function() {
+            // Script Wilayah Admin
+            const provSelect = document.getElementById('admin_id_provinsi');
+            const kabSelect = document.getElementById('admin_id_kabupaten');
+            const kecSelect = document.getElementById('admin_id_kecamatan');
+            const kelSelect = document.getElementById('admin_id_kelurahan');
+            
+            if (provSelect) {
+                const loadOptions = async (url, selectEl, selectedValue, defaultText, valueKey, textKey) => {
+                    selectEl.innerHTML = `<option value="">${defaultText}</option>`;
+                    if(!url) { selectEl.disabled = true; return; }
+                    try {
+                        const res = await fetch(url);
+                        const data = await res.json();
+                        data.forEach(item => {
+                            const option = document.createElement('option');
+                            option.value = item[valueKey];
+                            option.textContent = item[textKey];
+                            if (option.value == selectedValue) option.selected = true;
+                            selectEl.appendChild(option);
+                        });
+                        selectEl.disabled = false;
+                    } catch (e) { console.error(e); }
+                };
+
+                loadOptions('/api/region/provinsi', provSelect, provSelect.dataset.selected, 'Pilih Provinsi', 'kode_prov', 'nama_provinsi').then(() => {
+                    if (provSelect.dataset.selected) provSelect.dispatchEvent(new Event('change'));
+                });
+
+                provSelect.addEventListener('change', (e) => {
+                    kabSelect.dataset.selected = kabSelect.dataset.selected || ''; 
+                    const provId = e.target.value;
+                    if (provId) {
+                        loadOptions(`/api/region/kabupaten/${provId}`, kabSelect, kabSelect.dataset.selected, 'Pilih Kabupaten/Kota', 'kode_kabkota', 'nama_kabkota').then(() => {
+                            if (kabSelect.dataset.selected) kabSelect.dispatchEvent(new Event('change'));
+                            kabSelect.dataset.selected = ''; 
+                        });
+                    } else {
+                        kabSelect.innerHTML = '<option value="">Pilih Kabupaten/Kota</option>'; kabSelect.disabled = true;
+                    }
+                    kecSelect.innerHTML = '<option value="">Pilih Kecamatan</option>'; kecSelect.disabled = true;
+                    kelSelect.innerHTML = '<option value="">Pilih Kelurahan/Desa</option>'; kelSelect.disabled = true;
+                });
+
+                kabSelect.addEventListener('change', (e) => {
+                    kecSelect.dataset.selected = kecSelect.dataset.selected || '';
+                    const kabId = e.target.value;
+                    if (kabId) {
+                        loadOptions(`/api/region/kecamatan/${kabId}`, kecSelect, kecSelect.dataset.selected, 'Pilih Kecamatan', 'kode_kec', 'nama_kec').then(() => {
+                            if (kecSelect.dataset.selected) kecSelect.dispatchEvent(new Event('change'));
+                            kecSelect.dataset.selected = '';
+                        });
+                    } else {
+                        kecSelect.innerHTML = '<option value="">Pilih Kecamatan</option>'; kecSelect.disabled = true;
+                    }
+                    kelSelect.innerHTML = '<option value="">Pilih Kelurahan/Desa</option>'; kelSelect.disabled = true;
+                });
+
+                kecSelect.addEventListener('change', (e) => {
+                    kelSelect.dataset.selected = kelSelect.dataset.selected || '';
+                    const kecId = e.target.value;
+                    if (kecId) {
+                        loadOptions(`/api/region/kelurahan/${kecId}`, kelSelect, kelSelect.dataset.selected, 'Pilih Kelurahan/Desa', 'kode_desa_kel', 'nama_desa_kel').then(() => {
+                            kelSelect.dataset.selected = '';
+                        });
+                    } else {
+                        kelSelect.innerHTML = '<option value="">Pilih Kelurahan/Desa</option>'; kelSelect.disabled = true;
+                    }
+                });
+            }
+            
+            const jurusanSelect = document.getElementById('jurusan_id');
+            const programSelect = document.getElementById('program_keunggulan_id');
+            
+            if (jurusanSelect && programSelect) {
+                // Simpan opsi asli untuk referensi
+                const originalOptions = Array.from(programSelect.querySelectorAll('option[data-jurusan-id]'));
+                const defaultOption = programSelect.querySelector('option[value=""]');
+
+                function filterPrograms() {
+                    const selectedJurusan = jurusanSelect.value;
+                    const selectedProgram = programSelect.value;
+                    
+                    // Bersihkan select
+                    programSelect.innerHTML = '';
+                    programSelect.appendChild(defaultOption);
+                    
+                    let hasMatch = false;
+
+                    originalOptions.forEach(opt => {
+                        if (opt.getAttribute('data-jurusan-id') === selectedJurusan) {
+                            programSelect.appendChild(opt.cloneNode(true));
+                            if (opt.value === selectedProgram) {
+                                hasMatch = true;
+                            }
+                        }
+                    });
+
+                    // Disable jika tidak ada program untuk jurusan ini
+                    programSelect.disabled = programSelect.options.length <= 1;
+
+                    // Reset value if old selected program is no longer available
+                    if (!hasMatch) {
+                        programSelect.value = "";
+                    } else {
+                        programSelect.value = selectedProgram;
+                    }
+                }
+
+                jurusanSelect.addEventListener('change', function() {
+                    programSelect.value = ""; // Force reset when explicitly changed
+                    filterPrograms();
+                });
+                
+                // Initialize on load
+                filterPrograms();
+            }
+        })();
+    </script>
+    @endpush
 </x-app-layout>

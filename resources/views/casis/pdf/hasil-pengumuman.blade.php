@@ -118,35 +118,78 @@
         <table class="rincian-biaya">
             <thead>
                 <tr>
-                    <th width="10%">No</th>
-                    <th width="60%">Uraian Kegiatan</th>
-                    <th width="30%">Nominal (Rp)</th>
+                    <th width="5%" rowspan="2">NO</th>
+                    <th width="45%" rowspan="2">URAIAN KEGIATAN</th>
+                    <th width="50%" colspan="2">Kompetensi Keahlian</th>
+                </tr>
+                <tr>
+                    <th width="25%">TKRO, TJKT & TBSM</th>
+                    <th width="25%">AKUNTANSI</th>
                 </tr>
             </thead>
             <tbody>
                 @php
-                    $biayas = \App\Models\Biaya::whereIn('jenis_biaya', ['Daftar Ulang', 'SPP'])
-                                ->get()
-                                ->unique('nama_biaya');
-                    $totalBiaya = 0;
+                    $biayas = \App\Models\Biaya::with('jurusans')->whereIn('jenis_biaya', ['Daftar Ulang', 'SPP'])->get();
+                    
+                    $groupedBiayas = [];
+                    foreach ($biayas as $biaya) {
+                        if (!isset($groupedBiayas[$biaya->nama_biaya])) {
+                            $groupedBiayas[$biaya->nama_biaya] = [
+                                'nama' => $biaya->nama_biaya,
+                                'teknik_nominal' => null,
+                                'akuntansi_nominal' => null,
+                            ];
+                        }
+                        
+                        $isAkuntansi = false;
+                        $isTeknik = false;
+
+                        if ($biaya->jurusans->isEmpty()) {
+                            // If no jurusan assigned, assume it applies to both
+                            $isAkuntansi = true;
+                            $isTeknik = true;
+                        } else {
+                            foreach ($biaya->jurusans as $j) {
+                                if (stripos($j->nama, 'Akuntansi') !== false) {
+                                    $isAkuntansi = true;
+                                } else {
+                                    $isTeknik = true;
+                                }
+                            }
+                        }
+                        
+                        if ($isAkuntansi) {
+                            $groupedBiayas[$biaya->nama_biaya]['akuntansi_nominal'] = $biaya->nominal;
+                        }
+                        if ($isTeknik) {
+                            $groupedBiayas[$biaya->nama_biaya]['teknik_nominal'] = $biaya->nominal;
+                        }
+                    }
+
+                    $totalTeknik = 0;
+                    $totalAkuntansi = 0;
+                    $no = 1;
                 @endphp
-                @forelse($biayas as $index => $biaya)
-                    @php $totalBiaya += $biaya->nominal; @endphp
+                @forelse($groupedBiayas as $item)
+                    @php 
+                        $totalTeknik += $item['teknik_nominal'] ?? 0;
+                        $totalAkuntansi += $item['akuntansi_nominal'] ?? 0;
+                    @endphp
                     <tr>
-                        <td class="center">{{ $loop->iteration }}</td>
-                        <td>{{ $biaya->nama_biaya }}</td>
-                        <td class="right">Rp {{ number_format($biaya->nominal, 0, ',', '.') }}</td>
+                        <td class="center">{{ $no++ }}</td>
+                        <td>{{ $item['nama'] }}</td>
+                        <td class="right">{{ $item['teknik_nominal'] !== null ? 'Rp ' . number_format($item['teknik_nominal'], 0, ',', '.') : '-' }}</td>
+                        <td class="right">{{ $item['akuntansi_nominal'] !== null ? 'Rp ' . number_format($item['akuntansi_nominal'], 0, ',', '.') : '-' }}</td>
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="3" class="center">Rincian biaya belum diatur oleh Panitia.</td>
+                        <td colspan="4" class="center">Rincian biaya belum diatur oleh Panitia.</td>
                     </tr>
                 @endforelse
                 <tr>
-                    <td colspan="2" class="right bold">JUMLAH BIAYA</td>
-                    <td class="right bold">
-                        Rp {{ number_format($totalBiaya, 0, ',', '.') }}
-                    </td>
+                    <td colspan="2" class="center bold">JUMLAH</td>
+                    <td class="right bold">Rp {{ number_format($totalTeknik, 0, ',', '.') }}</td>
+                    <td class="right bold">Rp {{ number_format($totalAkuntansi, 0, ',', '.') }}</td>
                 </tr>
             </tbody>
         </table>
@@ -176,7 +219,7 @@
                     <td class="center">{{ $index + 1 }}</td>
                     <td>{{ strtoupper($c->nama_lengkap) }}</td>
                     <td>{{ strtoupper($c->nama_sekolah) }}</td>
-                    <td>{{ $c->alamat_siswa }}</td>
+                    <td>{{ $c->alamat_siswa }}, RT {{ $c->rt }}/RW {{ $c->rw }}, {{ $c->kelurahan?->nama_desa_kel }}, {{ $c->kecamatan?->nama_kec }}, {{ $c->kabupaten?->nama_kabkota }}, {{ $c->provinsi?->nama_provinsi }}</td>
                     <td class="center">{{ $c->jurusan ? $c->jurusan->kode : '-' }}</td>
                 </tr>
                 @empty

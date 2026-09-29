@@ -22,10 +22,10 @@ class Jurusan extends Model
         return $this->hasMany(ProgramKeunggulan::class, 'jurusan_id');
     }
 
-    // Quota calculation: Remaining quota = Total Quota - Total students already re-enrolled (Sudah Daftar Ulang)
+    // Quota calculation: Remaining quota = Total Quota - Total students already re-enrolled (Sudah Daftar Ulang) and Lulus
     public function getJumlahDaftarUlangAttribute()
     {
-        return $this->casis()->where('status_daftar_ulang', 'Sudah')->count();
+        return $this->casis()->where('status_daftar_ulang', 'Sudah')->where('status_kelulusan', 'Lulus')->count();
     }
 
     public function getSisaKuotaAttribute()

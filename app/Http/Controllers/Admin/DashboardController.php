@@ -149,4 +149,79 @@ class DashboardController extends Controller
 
         return back()->with('success', count($request->casis_ids) . ' data siswa berhasil diverifikasi & tagihan daftar ulang diterbitkan.');
     }
+
+    public function chartData(Request $request)
+    {
+        $type = $request->input('type', 'trend'); // 'trend' or 'payment'
+        $filter = $request->input('filter', '7_days'); // '7_days', '1_month', 'custom'
+        
+        // Get base params
+        $selectedTahunAjaranId = $request->input('tahun_ajaran_id');
+        $selectedSpmbPeriodId = $request->input('spmb_period_id');
+        
+        if (!$selectedTahunAjaranId && !$selectedSpmbPeriodId) {
+            $activePeriod = \App\Models\SpmbPeriod::where('status', 'aktif')->first();
+            if ($activePeriod) {
+                $selectedTahunAjaranId = $activePeriod->tahun_ajaran_id;
+                $selectedSpmbPeriodId = $activePeriod->id;
+            }
+        }
+        
+        $startDate = \Carbon\Carbon::now();
+        $endDate = \Carbon\Carbon::now();
+        
+        if ($filter === '7_days') {
+            $startDate = \Carbon\Carbon::now()->subDays(6);
+        } elseif ($filter === '1_month') {
+            $startDate = \Carbon\Carbon::now()->subDays(29);
+        } elseif ($filter === 'custom') {
+            if ($request->filled('start_date') && $request->filled('end_date')) {
+                $startDate = \Carbon\Carbon::parse($request->start_date);
+                $endDate = \Carbon\Carbon::parse($request->end_date);
+            }
+        }
+        
+        $data = [];
+        $labels = [];
+        
+        // Loop through dates
+        for ($date = clone $startDate; $date->lte($endDate); $date->addDay()) {
+            $dateStr = $date->format('Y-m-d');
+            
+            if ($type === 'trend') {
+                $query = Casis::query()->whereDate('created_at', $dateStr);
+                if ($selectedSpmbPeriodId) {
+                    $query->where('spmb_period_id', $selectedSpmbPeriodId);
+                } elseif ($selectedTahunAjaranId) {
+                    $query->whereHas('spmbPeriod', function($q) use ($selectedTahunAjaranId) {
+                        $q->where('tahun_ajaran_id', $selectedTahunAjaranId);
+                    });
+                }
+                $labels[] = $date->format('d M');
+                $data[] = $query->count();
+            } else {
+                $query = \App\Models\Pembayaran::where('transaction_status', 'settlement')
+                    ->whereDate('settlement_time', $dateStr);
+                
+                if ($selectedSpmbPeriodId) {
+                    $query->whereHas('casis', function($q) use ($selectedSpmbPeriodId) {
+                        $q->where('spmb_period_id', $selectedSpmbPeriodId);
+                    });
+                } elseif ($selectedTahunAjaranId) {
+                    $query->whereHas('casis.spmbPeriod', function($q) use ($selectedTahunAjaranId) {
+                        $q->where('tahun_ajaran_id', $selectedTahunAjaranId);
+                    });
+                }
+                
+                $months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+                $labels[] = $date->format('d') . ' ' . $months[$date->format('n') - 1] . ' ' . $date->format('Y');
+                $data[] = $query->count();
+            }
+        }
+        
+        return response()->json([
+            'labels' => $labels,
+            'data' => $data
+        ]);
+    }
 }

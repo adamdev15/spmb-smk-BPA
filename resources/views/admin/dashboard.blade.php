@@ -132,7 +132,7 @@
                         <h4 class="text-sm font-bold text-slate-900 truncate mb-1" title="{{ $j->nama }}">{{ $j->nama }}</h4>
                         <div class="flex justify-between text-xs text-slate-500 mb-2">
                             <span>Total Kuota: <strong>{{ $j->kuota }}</strong></span>
-                            <span>Daftar Ulang: <strong class="text-blue-600">{{ $j->jumlah_daftar_ulang }}</strong></span>
+                            <span>Total Kuota Tersisa: <strong class="text-blue-600">{{ $j->sisa_kuota }}</strong></span>
                         </div>
                         <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
                             @php
@@ -156,11 +156,27 @@
                     </div>
                 </div>
 
-                <!-- Chart 2: Pendaftar 7 Hari Terakhir -->
-                <div class="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-sm">
-                    <h4 class="text-sm font-bold text-slate-900 font-heading mb-1">Tren Pendaftaran 7 Hari Terakhir</h4>
-                    <p class="text-xs text-slate-500 mb-4">Jumlah pendaftar harian ke sistem SPMB</p>
-                    <div class="h-64 relative">
+                <!-- Chart 2: Pendaftar Berdasarkan Tren -->
+                <div class="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-sm flex flex-col">
+                    <div class="flex justify-between items-start mb-4 flex-wrap gap-2">
+                        <div>
+                            <h4 class="text-sm font-bold text-slate-900 font-heading mb-1" x-text="trendTitle">Tren Pendaftaran 7 Hari Terakhir</h4>
+                            <p class="text-xs text-slate-500">Jumlah pendaftar harian ke sistem SPMB</p>
+                        </div>
+                        <div class="flex flex-col gap-2 items-end">
+                            <select x-model="trendFilter" @change="fetchTrendData" class="bg-slate-50 border-none rounded-xl text-xs font-bold text-slate-700 px-3 py-1.5 focus:ring-2 focus:ring-blue-500/20 cursor-pointer">
+                                <option value="7_days">7 Hari Terakhir</option>
+                                <option value="1_month">1 Bulan Terakhir</option>
+                                <option value="custom">Pilih Periode</option>
+                            </select>
+                            <div x-show="trendFilter === 'custom'" class="flex gap-2" style="display: none;">
+                                <input type="date" x-model="trendStartDate" class="border-none bg-slate-50 rounded-xl text-xs px-2 py-1 focus:ring-2 focus:ring-blue-500/20">
+                                <input type="date" x-model="trendEndDate" class="border-none bg-slate-50 rounded-xl text-xs px-2 py-1 focus:ring-2 focus:ring-blue-500/20">
+                                <button type="button" @click="fetchTrendData" class="bg-blue-600 hover:bg-blue-700 transition-colors text-white rounded-xl px-3 py-1 text-xs font-bold">Set</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="h-64 relative flex-1">
                         <canvas id="trendChart"></canvas>
                     </div>
                 </div>
@@ -169,10 +185,26 @@
             <!-- Charts Section 2 -->
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8" x-data="dashboardChartsRow2()">
                 <!-- Chart 3: Pembayaran Daftar Ulang -->
-                <div class="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-sm">
-                    <h4 class="text-sm font-bold text-slate-900 font-heading mb-1">Pembayaran Daftar Ulang 7 Hari Terakhir</h4>
-                    <p class="text-xs text-slate-500 mb-4">Jumlah transaksi daftar ulang per hari</p>
-                    <div class="h-64 relative">
+                <div class="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-sm flex flex-col">
+                    <div class="flex justify-between items-start mb-4 flex-wrap gap-2">
+                        <div>
+                            <h4 class="text-sm font-bold text-slate-900 font-heading mb-1" x-text="paymentTitle">Pembayaran Daftar Ulang 7 Hari Terakhir</h4>
+                            <p class="text-xs text-slate-500">Jumlah transaksi daftar ulang per hari</p>
+                        </div>
+                        <div class="flex flex-col gap-2 items-end">
+                            <select x-model="paymentFilter" @change="fetchPaymentData" class="bg-slate-50 border-none rounded-xl text-xs font-bold text-slate-700 px-3 py-1.5 focus:ring-2 focus:ring-blue-500/20 cursor-pointer">
+                                <option value="7_days">7 Hari Terakhir</option>
+                                <option value="1_month">1 Bulan Terakhir</option>
+                                <option value="custom">Pilih Periode</option>
+                            </select>
+                            <div x-show="paymentFilter === 'custom'" class="flex gap-2" style="display: none;">
+                                <input type="date" x-model="paymentStartDate" class="border-none bg-slate-50 rounded-xl text-xs px-2 py-1 focus:ring-2 focus:ring-blue-500/20">
+                                <input type="date" x-model="paymentEndDate" class="border-none bg-slate-50 rounded-xl text-xs px-2 py-1 focus:ring-2 focus:ring-blue-500/20">
+                                <button type="button" @click="fetchPaymentData" class="bg-blue-600 hover:bg-blue-700 transition-colors text-white rounded-xl px-3 py-1 text-xs font-bold">Set</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="h-64 relative flex-1">
                         <canvas id="paymentChart"></canvas>
                     </div>
                 </div>
@@ -275,7 +307,13 @@
 
     <script>
         function dashboardCharts() {
+            let trendChartInstance = null;
             return {
+                trendFilter: '7_days',
+                trendStartDate: '',
+                trendEndDate: '',
+                trendTitle: 'Tren Pendaftaran 7 Hari Terakhir',
+                
                 init() {
                     this.initJurusanChart();
                     this.initTrendChart();
@@ -285,18 +323,17 @@
                     const ctx = document.getElementById('jurusanChart');
                     if (!ctx) return;
 
-                    const labels = @json($jurusanChartData['labels'] ?? []);
-                    const data = @json($jurusanChartData['data'] ?? []);
+                    const chartData = @json($jurusanChartData ?? ['labels'=>[], 'data'=>[]]);
 
                     new Chart(ctx, {
                         type: 'bar',
                         data: {
-                            labels: labels,
+                            labels: chartData.labels,
                             datasets: [{
-                                label: 'Jumlah Pendaftar',
-                                data: data,
+                                label: 'Pendaftar',
+                                data: chartData.data,
                                 backgroundColor: '#2491CA',
-                                borderRadius: 8
+                                borderRadius: 6
                             }]
                         },
                         options: {
@@ -315,7 +352,7 @@
                     const last7DaysData = @json(array_values($last7Days ?? []));
                     const last7DaysLabels = @json(array_map(function($d) { return \Carbon\Carbon::parse($d)->format('d M'); }, array_keys($last7Days ?? [])));
 
-                    new Chart(ctx, {
+                    trendChartInstance = new Chart(ctx, {
                         type: 'line',
                         data: {
                             labels: last7DaysLabels,
@@ -336,6 +373,37 @@
                             scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
                         }
                     });
+                },
+                
+                async fetchTrendData() {
+                    if (this.trendFilter === 'custom' && (!this.trendStartDate || !this.trendEndDate)) {
+                        return;
+                    }
+                    
+                    if(this.trendFilter === '7_days') this.trendTitle = 'Tren Pendaftaran 7 Hari Terakhir';
+                    else if(this.trendFilter === '1_month') this.trendTitle = 'Tren Pendaftaran 1 Bulan Terakhir';
+                    else this.trendTitle = 'Tren Pendaftaran (Custom)';
+
+                    const searchParams = new URLSearchParams(window.location.search);
+                    searchParams.set('type', 'trend');
+                    searchParams.set('filter', this.trendFilter);
+                    if (this.trendFilter === 'custom') {
+                        searchParams.set('start_date', this.trendStartDate);
+                        searchParams.set('end_date', this.trendEndDate);
+                    }
+                    
+                    try {
+                        const response = await fetch(`{{ route('admin.dashboard.chartData') }}?${searchParams.toString()}`);
+                        const result = await response.json();
+                        
+                        if (trendChartInstance) {
+                            trendChartInstance.data.labels = result.labels;
+                            trendChartInstance.data.datasets[0].data = result.data;
+                            trendChartInstance.update();
+                        }
+                    } catch (error) {
+                        console.error('Error fetching trend data:', error);
+                    }
                 }
             }
         }
@@ -346,6 +414,10 @@
 
             return {
                 pieType: 'gender',
+                paymentFilter: '7_days',
+                paymentStartDate: '',
+                paymentEndDate: '',
+                paymentTitle: 'Pembayaran Daftar Ulang 7 Hari Terakhir',
 
                 init() {
                     this.initPaymentChart();
@@ -388,22 +460,51 @@
                             plugins: { 
                                 legend: { display: false },
                                 datalabels: {
-                                    display: function(context) {
-                                        return context.dataset.data[context.dataIndex] > 0;
-                                    },
-                                    align: 'top',
+                                    display: function(context) { return context.dataset.data[context.dataIndex] > 0; },
+                                    color: '#2563eb',
                                     anchor: 'end',
-                                    color: '#1e293b',
-                                    font: { weight: 'bold', size: 11 },
-                                    formatter: function(value) {
-                                        return value;
-                                    }
+                                    align: 'top',
+                                    font: { weight: 'bold', size: 10 }
                                 }
                             },
-                            scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } },
+                            scales: { 
+                                y: { beginAtZero: true, ticks: { stepSize: 1 } },
+                                x: { grid: { display: false } }
+                            },
                             layout: { padding: { top: 20 } }
                         }
                     });
+                },
+                
+                async fetchPaymentData() {
+                    if (this.paymentFilter === 'custom' && (!this.paymentStartDate || !this.paymentEndDate)) {
+                        return;
+                    }
+                    
+                    if(this.paymentFilter === '7_days') this.paymentTitle = 'Pembayaran Daftar Ulang 7 Hari Terakhir';
+                    else if(this.paymentFilter === '1_month') this.paymentTitle = 'Pembayaran Daftar Ulang 1 Bulan Terakhir';
+                    else this.paymentTitle = 'Pembayaran Daftar Ulang (Custom)';
+
+                    const searchParams = new URLSearchParams(window.location.search);
+                    searchParams.set('type', 'payment');
+                    searchParams.set('filter', this.paymentFilter);
+                    if (this.paymentFilter === 'custom') {
+                        searchParams.set('start_date', this.paymentStartDate);
+                        searchParams.set('end_date', this.paymentEndDate);
+                    }
+                    
+                    try {
+                        const response = await fetch(`{{ route('admin.dashboard.chartData') }}?${searchParams.toString()}`);
+                        const result = await response.json();
+                        
+                        if (paymentChartInstance) {
+                            paymentChartInstance.data.labels = result.labels;
+                            paymentChartInstance.data.datasets[0].data = result.data;
+                            paymentChartInstance.update();
+                        }
+                    } catch (error) {
+                        console.error('Error fetching payment data:', error);
+                    }
                 },
 
                 initPieChart() {

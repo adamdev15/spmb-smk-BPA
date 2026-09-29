@@ -36,15 +36,31 @@ class RegistrationController extends Controller
 
         $settings = Setting::all()->pluck('value', 'key');
         $activePeriod = SpmbPeriod::with('tahunAjaran')
-            ->where('tanggal_mulai', '<=', now())
-            ->where('tanggal_selesai', '>=', now())
             ->where('status', 'aktif')
+            ->orderBy('tanggal_mulai', 'asc')
             ->first();
+
+        $registrationStatus = 'closed';
+        $tglMulai = null;
+
+        if ($activePeriod) {
+            $tglMulai = Carbon::parse($activePeriod->tanggal_mulai)->startOfDay();
+            $tglSelesai = Carbon::parse($activePeriod->tanggal_selesai)->endOfDay();
+            
+            if (now()->lt($tglMulai)) {
+                $registrationStatus = 'not_started';
+            } elseif (now()->gt($tglSelesai)) {
+                $registrationStatus = 'closed';
+            } else {
+                $registrationStatus = 'open';
+            }
+        }
 
         return view('registration.wizard', compact(
             'jurusans', 'programs', 'ketrampilan', 'hobi', 'cita', 
             'pendidikan', 'pekerjaan_ayah', 'pekerjaan_ibu', 'pekerjaan_wali', 
-            'penghasilan', 'orientasi', 'settings', 'activePeriod'
+            'penghasilan', 'orientasi', 'settings', 'activePeriod', 
+            'registrationStatus', 'tglMulai'
         ));
     }
 
@@ -53,10 +69,17 @@ class RegistrationController extends Controller
         $settings = Setting::all()->pluck('value', 'key');
         $now = Carbon::now();
 
-        $activePeriod = SpmbPeriod::where('tanggal_mulai', '<=', now())
-            ->where('tanggal_selesai', '>=', now())
-            ->where('status', 'aktif')
+        $activePeriod = SpmbPeriod::where('status', 'aktif')
+            ->orderBy('tanggal_mulai', 'asc')
             ->first();
+
+        if ($activePeriod) {
+            $tglMulai = Carbon::parse($activePeriod->tanggal_mulai)->startOfDay();
+            $tglSelesai = Carbon::parse($activePeriod->tanggal_selesai)->endOfDay();
+            if ($now->lt($tglMulai) || $now->gt($tglSelesai)) {
+                $activePeriod = null; // Deny submission if outside the period
+            }
+        }
 
         if (!$activePeriod) {
             return response()->json([
@@ -69,7 +92,9 @@ class RegistrationController extends Controller
         $msg = [
             'required' => ':attribute wajib diisi.',
             'unique' => ':attribute sudah terdaftar.',
-            'exists' => ':attribute tidak valid.'
+            'exists' => ':attribute tidak valid.',
+            'nik.unique' => 'NIK anda telah terdaftar, hubungi admin',
+            'nisn.unique' => 'NISN anda telah terdaftar, hubungi admin'
         ];
 
         $request->validate([
@@ -83,8 +108,10 @@ class RegistrationController extends Controller
             'nama_ibu' => 'required|string',
             'rt' => 'required|string',
             'rw' => 'required|string',
-            'kecamatan' => 'required|string',
-            'kab_kota' => 'required|string',
+            'id_provinsi' => 'required|string',
+            'id_kabupaten' => 'required|string',
+            'id_kecamatan' => 'required|string',
+            'id_kelurahan' => 'required|string',
             'alamat_siswa' => 'required|string',
             'nama_sekolah' => 'required|string',
             'alamat_sekolah' => 'required|string',
@@ -140,8 +167,10 @@ class RegistrationController extends Controller
                 'status_keluarga' => $request->status_keluarga,
                 'rt' => $request->rt,
                 'rw' => $request->rw,
-                'kecamatan' => $request->kecamatan,
-                'kab_kota' => $request->kab_kota,
+                'id_provinsi' => $request->id_provinsi,
+                'id_kabupaten' => $request->id_kabupaten,
+                'id_kecamatan' => $request->id_kecamatan,
+                'id_kelurahan' => $request->id_kelurahan,
                 'alamat_siswa' => $request->alamat_siswa,
                 'no_hp_siswa' => $request->no_hp_siswa,
                 'jurusan_id' => $request->jurusan_id,

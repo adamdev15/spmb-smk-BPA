@@ -101,6 +101,19 @@
                                             <dt class="text-xs text-gray-400">Jurusan Keahlian</dt>
                                             <dd class="text-sm font-bold text-gray-900">{{ $casis->jurusan->nama ?? '-' }}</dd>
                                         </div>
+                                        <div>
+                                            <dt class="text-xs text-gray-400">Alamat</dt>
+                                            <dd class="text-sm font-bold text-gray-900">
+                                                {{ $casis->alamat_siswa ?? '-' }}
+                                                @if($casis->rt || $casis->rw)
+                                                    RT {{ $casis->rt ?? '-' }}/RW {{ $casis->rw ?? '-' }},
+                                                @endif
+                                                {{ $casis->kelurahan ? $casis->kelurahan->nama_desa_kel . ',' : '' }}
+                                                {{ $casis->kecamatan ? $casis->kecamatan->nama_kec . ',' : '' }}
+                                                {{ $casis->kabupaten ? $casis->kabupaten->nama_kabkota . ',' : '' }}
+                                                {{ $casis->provinsi ? $casis->provinsi->nama_provinsi : '' }}
+                                            </dd>
+                                        </div>
                                     </dl>
                                 </section>
                             </div>
@@ -329,7 +342,7 @@
                                 @endif
                             </div>
 
-                            <form action="{{ route('admin.casis.selection', $casis->id) }}" method="POST"
+                            <form id="updateKelulusanForm" action="{{ route('admin.casis.updateKelulusan', $casis->id) }}" method="POST"
                                 class="space-y-6">
                                 @csrf
                                 <div>
@@ -395,6 +408,17 @@
                                     <p class="text-xs font-bold text-gray-900">{{ $pembayaran->created_at->format('d F Y') }}</p>
                                 </div>
                             </div>
+                            
+                            @if($pembayaran->transaction_status === 'settlement' || $casis->status_daftar_ulang === 'Sudah')
+                            <div class="mt-5 border-t border-gray-100 pt-5 flex gap-3">
+                                <a href="{{ route('admin.pembayaran.print_kwitansi', $casis->id) }}" target="_blank" class="w-full flex justify-center items-center gap-2 bg-white border border-gray-200 hover:border-blue-500 hover:shadow-md text-gray-700 hover:text-blue-600 px-3 py-2 rounded-2xl transition-all group">
+                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                                    </svg>
+                                    Cetak Kwitansi
+                                </a>
+                            </div>
+                            @endif
                             @else
                                 <div class="text-center py-4">
                                     <p class="text-xs text-gray-500 mb-4">Belum ada tagihan daftar ulang.</p>
@@ -447,4 +471,51 @@
             </div>
         </div>
     </div>
+
+    @push('scripts')
+    <script>
+        document.getElementById('updateKelulusanForm')?.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const form = this;
+            const submitBtn = form.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            
+            submitBtn.innerHTML = 'Menyimpan...';
+            submitBtn.disabled = true;
+            
+            const formData = new FormData(form);
+            
+            fetch(form.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
+                }
+            })
+            .then(res => res.json())
+            .then(data => {
+                if(data.success) {
+                    Swal.fire({
+                        title: 'Berhasil!',
+                        text: data.message,
+                        icon: 'success'
+                    }).then(() => {
+                        window.location.reload();
+                    });
+                } else {
+                    Swal.fire('Gagal!', data.message || 'Terjadi kesalahan sistem.', 'error');
+                    submitBtn.innerHTML = originalText;
+                    submitBtn.disabled = false;
+                }
+            })
+            .catch(err => {
+                Swal.fire('Error!', 'Terjadi kesalahan koneksi atau server.', 'error');
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+            });
+        });
+    </script>
+    @endpush
 </x-app-layout>

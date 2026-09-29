@@ -62,4 +62,24 @@ class Casis extends Authenticatable
     {
         return $this->status_daftar_ulang === 'Sudah';
     }
+
+    public function kelurahan()
+    {
+        return $this->belongsTo(Kelurahan::class, 'id_kelurahan', 'kode_desa_kel');
+    }
+
+    public function provinsi()
+    {
+        return $this->belongsTo(Provinsi::class, 'id_provinsi', 'kode_prov');
+    }
+
+    public function kabupaten()
+    {
+        return $this->belongsTo(Kabupaten::class, 'id_kabupaten', 'kode_kabkota');
+    }
+
+    public function kecamatan()
+    {
+        return $this->belongsTo(Kecamatan::class, 'id_kecamatan', 'kode_kec');
+    }
 }

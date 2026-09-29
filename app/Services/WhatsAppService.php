@@ -12,56 +12,64 @@ use Carbon\Carbon;
 class WhatsAppService
 {
     /**
-     * Send WhatsApp message via Fonnte API
+     * Send WhatsApp message via Bablast.id WABA (Official Meta API)
      *
      * @param string $target Phone number (e.g. 08123456789 or 628123456789)
-     * @param string $message Text content
+     * @param string $message Text content (free-text or template)
      * @return bool
      */
     public static function sendMessage(string $target, string $message): bool
     {
-        $status = Setting::where('key', 'fonnte_status')->value('value');
+        $status = Setting::where('key', 'wa_status')->value('value');
         if ($status === '0' || $status === 'false') {
-            Log::info('WhatsAppService: Fonnte is disabled via settings. Message not sent to ' . $target);
+            Log::info('WhatsAppService: WA notification is disabled via settings. Message not sent to ' . $target);
             return false;
         }
 
-        $token = Setting::where('key', 'fonnte_token')->value('value') ?: config('services.fonnte.token');
+        $apiToken  = Setting::where('key', 'bablast_api_token')->value('value') ?: config('services.bablast.token');
+        $senderId  = Setting::where('key', 'bablast_sender_id')->value('value') ?: config('services.bablast.sender_id');
 
-        if (empty($token)) {
-            Log::warning('WhatsAppService: Fonnte token is empty. Message not sent.', ['target' => $target]);
+        if (empty($apiToken) || empty($senderId)) {
+            Log::warning('WhatsAppService: Bablast API token or Sender ID is empty. Message not sent.', ['target' => $target]);
             return false;
         }
 
-        // Format Indonesian phone numbers
+        // Normalize Indonesian phone number to international format (without +)
         $target = preg_replace('/[^0-9]/', '', $target);
         if (str_starts_with($target, '0')) {
             $target = '62' . substr($target, 1);
         }
 
         try {
+            // Bablast.id API: POST /api/send-message
             $response = Http::withHeaders([
-                'Authorization' => $token,
-            ])->post('https://api.fonnte.com/send', [
-                'target' => $target,
-                'message' => $message,
+                'Authorization' => 'Bearer ' . $apiToken,
+                'Content-Type'  => 'application/json',
+                'Accept'        => 'application/json',
+            ])->post('https://dash.bablast.id/api/send-message', [
+                'sender_id' => $senderId,
+                'to'        => $target,
+                'type'      => 'text',
+                'message'   => $message,
             ]);
 
             if ($response->successful()) {
                 $responseData = $response->json();
-                if (isset($responseData['status']) && $responseData['status'] === true) {
-                    Log::info('WhatsApp message sent successfully to ' . $target);
+                // Bablast returns status: true or message_id on success
+                if (isset($responseData['status']) && $responseData['status'] === true
+                    || isset($responseData['message_id'])) {
+                    Log::info('WhatsApp (Bablast) message sent successfully to ' . $target);
                     return true;
                 } else {
-                    Log::error('WhatsAppService error: ' . $response->body());
+                    Log::error('WhatsAppService (Bablast) error: ' . $response->body());
                     return false;
                 }
             }
 
-            Log::error('WhatsAppService HTTP error: ' . $response->status() . ' - ' . $response->body());
+            Log::error('WhatsAppService (Bablast) HTTP error: ' . $response->status() . ' - ' . $response->body());
             return false;
         } catch (\Exception $e) {
-            Log::error('WhatsAppService Exception: ' . $e->getMessage());
+            Log::error('WhatsAppService (Bablast) Exception: ' . $e->getMessage());
             return false;
         }
     }
@@ -179,7 +187,7 @@ class WhatsAppService
     public static function sendPaymentNotificationToAdmin($casis, $pembayaran): bool
     {
         $adminNumber = Setting::where('key', 'wa_center')->value('value');
-        
+
         if (empty($adminNumber)) {
             Log::warning('WhatsAppService: wa_center is not configured. Admin notification not sent.');
             return false;
@@ -196,7 +204,7 @@ class WhatsAppService
         $nominal = number_format($pembayaran->nominal, 0, ',', '.');
         $jurusan = $casis->jurusan ? $casis->jurusan->kode : '-';
 
-        $message = "⚠️ *PEMBERITAHUAN PEMBAYARAN MASUK* ⚠️\n\n"
+        $message = "🔔 *PEMBERITAHUAN PEMBAYARAN MASUK* 🔔\n\n"
                  . "Telah diterima pembayaran Daftar Ulang dari siswa:\n\n"
                  . "Nama: *{$casis->nama_lengkap}*\n"
                  . "No. Daftar: {$casis->no_pendaftaran}\n"
