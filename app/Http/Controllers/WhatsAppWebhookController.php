@@ -40,7 +40,8 @@ class WhatsAppWebhookController extends Controller
     {
         $payload = $request->all();
 
-        Log::info('WhatsApp Webhook received', ['payload' => $payload]);
+        // Gunakan json_encode agar array yang dalam (nested) tidak terpotong saat di-log
+        Log::info('WhatsApp Webhook received: ' . json_encode($payload));
 
         // Proses hanya event dari WhatsApp
         if (($payload['object'] ?? '') !== 'whatsapp_business_account') {

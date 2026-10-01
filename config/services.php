@@ -46,7 +46,6 @@ return [
 
     'bablast' => [
         'token'                => env('BABLAST_API_TOKEN', ''),
-        'sender_id'            => env('BABLAST_SENDER_ID', ''),
         'webhook_verify_token' => env('BABLAST_WEBHOOK_VERIFY_TOKEN', 'smk_bpa_webhook_secret'),
     ],
 

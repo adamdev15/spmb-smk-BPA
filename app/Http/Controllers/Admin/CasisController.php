@@ -381,7 +381,7 @@ class CasisController extends Controller
         if ($success) {
             return back()->with('success', 'Notifikasi pengingat WhatsApp berhasil dikirim ke ' . $casis->nama_lengkap);
         } else {
-            return back()->with('error', 'Gagal mengirim notifikasi WhatsApp. Pastikan nomor valid atau API Fonnte aktif.');
+            return back()->with('error', 'Gagal mengirim notifikasi WhatsApp. Pastikan nomor valid, format template benar, dan API Token Bablast aktif.');
         }
     }
 

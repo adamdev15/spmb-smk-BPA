@@ -27,17 +27,6 @@ return new class extends Migration
                 'name' => 'Status WhatsApp Notifikasi',
             ]);
 
-        // 3. Tambah setting bablast_sender_id jika belum ada
-        if (DB::table('settings')->where('key', 'bablast_sender_id')->doesntExist()) {
-            DB::table('settings')->insert([
-                'key'        => 'bablast_sender_id',
-                'name'       => 'Bablast Sender ID',
-                'value'      => '',
-                'type'       => 'text',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-        }
     }
 
     /**
@@ -58,7 +47,5 @@ return new class extends Migration
                 'key'  => 'fonnte_status',
                 'name' => 'Status Fonnte',
             ]);
-
-        DB::table('settings')->where('key', 'bablast_sender_id')->delete();
     }
 };

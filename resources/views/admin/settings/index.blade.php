@@ -298,7 +298,7 @@
                     <div class="p-6">
                         <div class="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
                             <h4 class="text-sm font-semibold text-gray-900 mb-2">Test Koneksi WhatsApp</h4>
-                            <p class="text-xs text-gray-600 mb-4">Pastikan Bablast API Token dan Sender ID sudah tersimpan (dan di-refresh) sebelum melakukan test.</p>
+                            <p class="text-xs text-gray-600 mb-4">Pastikan Bablast API Token (Secret Token) sudah tersimpan (dan di-refresh) sebelum melakukan test.</p>
                             <button type="button" onclick="document.getElementById('modalTestWhatsapp').classList.remove('hidden')" class="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-md text-xs font-bold transition shadow-sm">
                                 Mulai Test Koneksi
                             </button>
@@ -580,8 +580,18 @@
                             Test Koneksi WhatsApp
                         </h3>
                         <div class="mt-2">
-                            <p class="text-sm text-gray-500">Masukkan nomor WhatsApp aktif (awali dengan 08 atau 62) untuk mengirimkan pesan test dari sistem.</p>
+                            <p class="text-sm text-gray-500">Kirim pesan uji coba menggunakan template WABA yang sudah disetujui (APPROVED) di dashboard Bablast/Meta.</p>
+                            <div class="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+                                <p class="text-xs text-yellow-700"><strong>⚠ Catatan:</strong> Template <code>hello_world</code> hanya bisa dikirim dari nomor Test Publik Meta, <strong>bukan dari nomor WABA production</strong>. Gunakan template Anda sendiri yang sudah APPROVED.</p>
+                            </div>
                             <div class="mt-4">
+                                <label class="block text-sm font-medium text-gray-700">Nama Template WABA</label>
+                                <input type="text" name="test_template" value="hello_world" required
+                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                    placeholder="spmb_pendaftaran_berhasil">
+                                <p class="mt-1 text-xs text-gray-400">Isi dengan nama template yang sudah APPROVED di Bablast/Meta.</p>
+                            </div>
+                            <div class="mt-3">
                                 <label class="block text-sm font-medium text-gray-700">Nomor WhatsApp Tujuan</label>
                                 <input type="text" name="test_nomor" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="08xxxxxxxx">
                             </div>
